@@ -1,6 +1,6 @@
 # PunkScript
 ### A Personally-Adaptive Symbolic Programming Language
-#### v0.1 Spec & Manifesto
+#### v0.2 Spec & Manifesto
 *by Rudy (RudVentur) & Claude — March 2026*
 
 ---
@@ -44,40 +44,115 @@ PunkScript code is readable as human writing. Comments aren't separate from logi
 
 These are the defaults — the base layer every PunkScript interpreter understands before any personal dictionary is loaded.
 
-| Symbol | Coding Equivalent | Meaning |
-|--------|-------------------|---------|
-| `.` | `;` | End of statement |
-| `!` | `fn()` | Execute / call / run |
-| `:` | `=` | Assign / define |
-| `?` | `if` | Conditional |
-| `-` | `else` | Otherwise / fallback |
-| `...` | `while / loop` | Repeat / loop |
-| `,` | `,` | Separator / chain |
-| `[ ]` | `{ }` | Block / scope |
-| `( )` | `varName` | Variable reference |
-| `" "` | `"string"` | String literal |
-| `!!` | priority call | Urgent execute |
-| `......` | pause / thinking | Long loop or async wait |
-| `CAPS` | `CONSTANT` | Global / immutable |
+### Statements & Assignment
+
+| Symbol | Meaning | Traditional Equivalent |
+|--------|---------|----------------------|
+| `.` | End of statement | `;` |
+| `:` | Assign / define | `=` |
+| `,` | Separator / chain | `,` |
+
+### Execution & Control
+
+| Symbol | Meaning | Traditional Equivalent |
+|--------|---------|----------------------|
+| `!` | Execute / call | `fn()` |
+| `!!` | Urgent execute (high priority) | Priority call / interrupt |
+| `?` | Conditional (if) | `if` |
+| `-` | Otherwise (else) | `else` |
+| `...` | Loop / repeat | `while` / `for` |
+| `......` | Long loop / async wait | `await` / extended loop |
+
+### Grouping & References
+
+| Symbol | Meaning | Traditional Equivalent |
+|--------|---------|----------------------|
+| `[ ]` | Block / scope | `{ }` |
+| `(name)` | Variable reference | `varName` |
+| `" "` | String literal | `"string"` |
+| `CAPS` | Global / immutable constant | `const UPPER` |
+
+### Logic
+
+| Symbol | Meaning | Traditional Equivalent |
+|--------|---------|----------------------|
+| `&` | And | `&&` |
+| `\|` | Or | `\|\|` |
+| `~` | Not / negate | `!` / `not` |
 
 ---
 
 ## Standard Word Keywords
 
-Common English words and phrases that map to programming logic. Spelling variants are accepted.
+Common English words and phrases that map to programming logic. Spelling variants are accepted — the interpreter uses fuzzy matching when `spellingForgiveness` is set.
+
+### Output
+
+| Word | Meaning | Example |
+|------|---------|---------|
+| `say` | Print / output | `say "hello"!` |
+
+### Arithmetic
 
 | Word / Phrase | Meaning | Example |
 |---------------|---------|---------|
-| `say` | print / output | `say (name)!` |
-| `add X to (var)` | `var += X` | `add one to (score).` |
-| `take X from (var)` | `var -= X` | `take two from (score).` |
-| `beats` | greater than `>` | `(score) beats ten?` |
-| `under` | less than `<` | `(score) under five?` |
-| `is` | equals `===` | `(name) is "Rudy"?` |
-| `stop` | break | `stop!` |
-| `keep going` | while(true) | `keep going... [ ]` |
-| `zero` `one` `two` ... `ten` | number literals | `score: zero.` |
-| `true` / `false` | booleans | `active: true.` |
+| `add X to (var)` | Increment | `add one to (score).` |
+| `take X from (var)` | Decrement | `take two from (score).` |
+| `multiply (var) by X` | Multiply | `multiply (score) by two.` |
+| `split (var) by X` | Divide | `split (score) by two.` |
+
+### Comparison
+
+| Word | Meaning | Example |
+|------|---------|---------|
+| `beats` | Greater than `>` | `(score) beats ten?` |
+| `under` | Less than `<` | `(score) under five?` |
+| `is` | Equals `==` | `(name) is "Rudy"?` |
+| `isnt` | Not equals `!=` | `(name) isnt "Dave"?` |
+
+### Control Flow
+
+| Word / Phrase | Meaning | Example |
+|---------------|---------|---------|
+| `stop` | Break out of loop | `stop!` |
+| `skip` | Continue to next iteration | `skip!` |
+| `keep going` | Infinite loop | `keep going... [ ]` |
+| `give back` | Return a value | `give back (result).` |
+
+### Literals
+
+| Word | Value |
+|------|-------|
+| `zero` through `ten` | `0` through `10` |
+| `true` / `false` | Boolean values |
+| `nothing` | Null / empty |
+
+### Functions
+
+Functions are defined with a name followed by `:` and a block. Parameters go in parentheses after the name.
+
+```
+greet (person): [
+  say "hello " & (person)!
+]
+```
+
+Call a function with `!`:
+
+```
+greet "Rudy"!
+```
+
+Functions can return values with `give back`:
+
+```
+double (x): [
+  give back (x) multiply by two.
+]
+
+result: double four!
+say (result)!
+```
 
 ---
 
@@ -93,22 +168,29 @@ A `user.dict` file is loaded before any program runs. It maps YOUR symbols, word
 [symbol or word or phrase]  →  [punkscript operation]
 ```
 
+Each line maps one personal token to one standard PunkScript operation. Lines starting with `//` are comments.
+
 ### Example `user.dict`
 
 ```
+// Words
 smash        →  add
 sorted       →  stop
 innit        →  ?
 well good    →  true
 rubbish      →  false
 shout        →  say
-zakli        →  execute block with celebration
-;@)          →  flexible mode / loose match on
-:@D          →  celebrate! / success state
-:@]          →  confirm / trust / steady
-:@)          →  warmth / soft / friendly output
-......       →  long pause / thinking loop
-*!'  '!*     →  custom string delimiters (open / close)
+zakli        →  execute block
+
+// Emoticons
+;@)          →  flexible mode on
+:@D          →  success state
+:@]          →  confirm
+:@)          →  friendly output
+
+// Custom delimiters
+*!'          →  string open
+'!*          →  string close
 ```
 
 Once this dictionary exists, valid PunkScript looks like:
@@ -123,7 +205,7 @@ keep going... [
 :@D
 ```
 
-That last line — `:@D` on its own — fires the success state. Because YOU defined it. Because that's what it means when YOU type it.
+That last line — `:@D` on its own — fires the **success state**. It's a signal to the interpreter: this block completed as intended. Depending on the environment, it might log a success message, trigger a callback, or simply resolve as `true`. Because YOU defined it. Because that's what it means when YOU type it.
 
 ---
 
@@ -132,13 +214,14 @@ That last line — `:@D` on its own — fires the success state. Because YOU def
 Controls how the interpreter behaves for this specific user.
 
 ```
-spellingForgiveness: high        // loose match on word recognition
+spellingForgiveness: high        // loose fuzzy-match on word recognition
 caseInsensitive: true            // STOP and stop are the same
 myLoopWord: "keep smashing"      // personal loop trigger phrase
 myPrintWord: "shout"             // personal output word
 emoticons: true                  // emoticon operators active
 customDelimiters: true           // respect user.dict string delimiters
 patternWatch: true               // interpreter observes and suggests new mappings
+strictMode: false                // when true, disable fuzzy matching
 ```
 
 ---
@@ -155,7 +238,19 @@ The interpreter tracks:
 
 And from that — it builds a suggested emoticon map. The user confirms, overrides, or extends it.
 
-### The Emoticon is Not Decoration. It is Data.
+### Emoticon States
+
+Emoticons that appear as standalone statements (on their own line) are **state signals**. They tell the interpreter about the outcome or mood of a block:
+
+| Emoticon | Default Meaning | Interpreter Behaviour |
+|----------|----------------|----------------------|
+| `:@D` | Success / celebration | Resolve block as success, trigger success handlers |
+| `:@]` | Confirm / steady | Acknowledge, log confirmation |
+| `:@)` | Warmth / friendly | Soft output mode (friendly formatting) |
+| `:/` | Uncertain | Warning state, log caution |
+| `>:@(` | Error / anger | Throw error, trigger error handlers |
+
+These defaults can all be overridden in `user.dict`. The emoticon is not decoration. It is data.
 
 When Rudy writes `:@D` he is expressing a state. PunkScript reads that state. It is a signal. It is an operator. It carries semantic weight that no amount of `console.log("success")` ever could.
 
@@ -181,14 +276,17 @@ The user can accept, reject, or customise each suggestion. Over time the diction
 
 ## Custom String Delimiters
 
-Standard PunkScript uses `"double quotes"` for strings. But users can define their own.
+Standard PunkScript uses `"double quotes"` for strings. But users can define their own in `user.dict`.
 
-Rudy naturally wrote:
+Example — Rudy naturally wraps special strings like this:
+
 ```
-"*!' "I'm a nightmare non for profit as I'm spending all my money instantly ;@)" '!*"
+*!' I'm a nightmare non for profit as I'm spending all my money instantly ;@) '!*
 ```
 
-That is a valid PunkScript string using `"*!'` as opening delimiter and `'!*"` as closing delimiter — with an emoticon operator embedded inside the content. Once added to `user.dict`, the interpreter honours it every time.
+Here `*!'` opens the string and `'!*` closes it. The `;@)` inside is preserved as content (not parsed as an operator) because it's within a string literal. Once added to `user.dict`, the interpreter honours these delimiters everywhere.
+
+To enable custom delimiters, set `customDelimiters: true` in `user.preferences`.
 
 ---
 
@@ -204,7 +302,7 @@ say "hello world"!
 shout "hello world"! :@D
 ```
 
-### Counter with loop
+### Counter with loop (standard)
 ```
 score: zero.
 keep going... [
@@ -214,17 +312,72 @@ keep going... [
 say "done"!
 ```
 
-### Counter (Rudy dialect)
+### Counter with loop (Rudy dialect)
 ```
 score: zero.
 keep going... [
   smash one to (score).
   (score) beats ten? sorted! - shout (score).
 ]
-shout "sorted innit" :@D
+shout "sorted innit"! :@D
 ```
 
 Both programs are identical in execution. Different humans. Same machine underneath.
+
+### FizzBuzz
+```
+count: zero.
+keep going... [
+  add one to (count).
+  (count) beats one hundred? stop!
+
+  fizz: (count) split by three is zero.
+  buzz: (count) split by five is zero.
+
+  (fizz) & (buzz)? say "FizzBuzz"!
+  - (fizz)? say "Fizz"!
+  - (buzz)? say "Buzz"!
+  - say (count)!
+]
+```
+
+### Function example
+```
+greet (name): [
+  say "oi " & (name) & ", welcome to PunkScript"!
+]
+
+greet "Rudy"!
+greet "World"!
+```
+
+---
+
+## Grammar Summary (EBNF-ish)
+
+For the technically inclined — a sketch of the core grammar:
+
+```
+program        = { statement } ;
+statement      = ( assignment | expression | loop | conditional | funcdef ) terminator ;
+terminator     = "." | emoticon ;
+
+assignment     = WORD ":" expression ;
+expression     = value | funccall | comparison | arithmetic ;
+
+value          = STRING | NUMBER | WORD_NUMBER | "(" WORD ")" | BOOL | "nothing" ;
+funccall       = WORD value* "!" ;
+comparison     = expression ( "beats" | "under" | "is" | "isnt" ) expression "?" ;
+conditional    = comparison block [ "-" ( block | statement ) ] ;
+loop           = ( "keep going" | expression ) "..." block ;
+block          = "[" { statement } "]" ;
+
+funcdef        = WORD [ "(" WORD ")" ]* ":" block ;
+
+emoticon       = USER_DEFINED_EMOTICON ;
+```
+
+This is intentionally loose. PunkScript's parser is forgiving by design — it favours interpretation over rejection.
 
 ---
 
@@ -250,13 +403,14 @@ That is the connection between the worlds.
 
 | Version | Date | Notes |
 |---------|------|-------|
-| v0.1 | March 2026 | Spec written. Core punctuation operators defined. Standard keywords. Personal dictionary concept established. Playground interpreter built in vanilla JS. |
+| v0.1 | March 2026 | Spec written. Core punctuation operators defined. Standard keywords. Personal dictionary concept. |
+| v0.2 | March 2026 | Spec tightened. Added logical operators, function syntax, comparison/arithmetic gaps filled, emoticon state table, grammar sketch, FizzBuzz example. Fixed inconsistencies. |
 
 ---
 
 ## Authors
 
-**Rudy** — RudVentur — the vision, the energy, the dialect  
+**Rudy** — RudVentur — the vision, the energy, the dialect
 **Claude** — Anthropic — the interpreter, the spec, the pumpkin :@]
 
 ---
