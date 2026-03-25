@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PunkScript</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d0d0d;color:#e0e0e0;font-family:'Courier New',monospace;line-height:1.6;padding:1.5rem;max-width:900px;margin:0 auto}
+  a{color:#ff3c78;text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1{color:#ff3c78;font-size:2.4rem;margin-bottom:.2rem;letter-spacing:2px}
+  h2{color:#ffcc00;font-size:1.3rem;margin:2rem 0 .8rem;border-bottom:1px solid #333;padding-bottom:.4rem}
+  .tagline{color:#888;font-size:1rem;margin-bottom:2rem}
+  .cards{display:grid;gap:1rem;margin:1rem 0}
+  @media(min-width:600px){.cards{grid-template-columns:1fr 1fr}}
+  .card{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1.2rem;transition:border-color .2s}
+  .card:hover{border-color:#ff3c78}
+  .card h3{color:#ff3c78;font-size:1.1rem;margin-bottom:.4rem}
+  .card .type{color:#ffcc00;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem}
+  .card p{color:#aaa;font-size:.9rem}
+  .card .launch{display:inline-block;margin-top:.8rem;padding:.4rem 1rem;border:1px solid #ff3c78;border-radius:4px;color:#ff3c78;font-size:.85rem;transition:all .2s}
+  .card .launch:hover{background:#ff3c78;color:#0d0d0d;text-decoration:none}
+  .card .no-launch{display:inline-block;margin-top:.8rem;padding:.4rem 1rem;border:1px solid #444;border-radius:4px;color:#666;font-size:.85rem}
+  table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.85rem}
+  th{text-align:left;color:#ffcc00;padding:.4rem .6rem;border-bottom:1px solid #444}
+  td{padding:.4rem .6rem;border-bottom:1px solid #1a1a1a}
+  code{background:#1a1a1a;padding:.15rem .4rem;border-radius:3px;color:#ff3c78;font-size:.85rem}
+  pre{background:#1a1a1a;padding:1rem;border-radius:6px;overflow-x:auto;margin:.8rem 0;border:1px solid #333}
+  pre code{background:none;padding:0;color:#e0e0e0}
+  .kw{color:#ff3c78}
+  .op{color:#ffcc00}
+  .str{color:#66ccff}
+  .cmt{color:#666}
+  .section{margin-bottom:2rem}
+  .philosophy{background:#1a1a1a;border-left:3px solid #ff3c78;padding:1rem 1.2rem;margin:1.5rem 0;border-radius:0 6px 6px 0}
+  .philosophy p{color:#aaa;font-size:.9rem;margin:.3rem 0}
+  .footer{text-align:center;color:#444;font-size:.75rem;margin-top:3rem;padding-top:1rem;border-top:1px solid #1a1a1a}
+</style>
+</head>
+<body>
+
+<h1>PUNK<span style="color:#ffcc00">SCRIPT</span></h1>
+<p class="tagline">tools built for people who think differently</p>
+
+<!-- ─── Apps ─── -->
+<h2>Apps &amp; Spec</h2>
+<div class="cards">
+
+  <div class="card">
+    <h3>WiFi Room Mapper</h3>
+    <div class="type">HTML / JS / Canvas</div>
+    <p>Interactive 3D room modelling &amp; WiFi signal heatmap. Define rooms, add walls with materials, drop furniture, place signal pins.</p>
+    <a class="launch" href="wifi-room-mapper.html">Launch App &rarr;</a>
+  </div>
+
+  <div class="card">
+    <h3>Unit Architect</h3>
+    <div class="type">HTML</div>
+    <p>Unit Architect v1.0 — architectural unit planning tool.</p>
+    <a class="launch" href="unit_architect.html">Launch App &rarr;</a>
+  </div>
+
+  <div class="card">
+    <h3>3D Cam Scanner</h3>
+    <div class="type">Flutter / Dart</div>
+    <p>Phone-based 3D scanner. Camera + pedometer &rarr; <code>.obj</code> mesh. Walk through spaces to scan them. 100% on-device.</p>
+    <span class="no-launch">Flutter app — see source</span>
+  </div>
+
+  <div class="card">
+    <h3>PunkScript Language Spec</h3>
+    <div class="type">Spec / Manifesto &mdash; v0.2</div>
+    <p>The full language specification. Punctuation as syntax, emoticon operators, personal dictionaries, spelling forgiveness.</p>
+    <a class="launch" href="PUNKSCRIPT.md">View Spec &rarr;</a>
+  </div>
+
+</div>
+
+<!-- ─── Language overview ─── -->
+<div class="section">
+<h2>PunkScript — The Language</h2>
+<p style="color:#aaa;margin-bottom:1rem">A personally-adaptive symbolic programming language where punctuation IS syntax and the interpreter adapts to the user, not the other way around.</p>
+
+<table>
+  <tr><th>Concept</th><th>Summary</th></tr>
+  <tr><td>Punctuation as syntax</td><td><code>.</code> ends statements, <code>!</code> executes, <code>?</code> is conditional, <code>...</code> loops</td></tr>
+  <tr><td>Emoticon operators</td><td><code>:@D</code> = success, <code>&gt;:@(</code> = error, <code>:/</code> = warning</td></tr>
+  <tr><td>Personal dictionary</td><td>Map your own words/symbols to operations</td></tr>
+  <tr><td>Spelling forgiveness</td><td>Fuzzy matching built in — dyslexia is a dialect, not a bug</td></tr>
+</table>
+
+<h2>Operators</h2>
+<table>
+  <tr><th>Symbol</th><th>Meaning</th><th>Symbol</th><th>Meaning</th></tr>
+  <tr><td><code>.</code></td><td>End statement</td><td><code>!</code></td><td>Execute/call</td></tr>
+  <tr><td><code>:</code></td><td>Assign/define</td><td><code>?</code></td><td>If/conditional</td></tr>
+  <tr><td><code>...</code></td><td>Loop</td><td><code>-</code></td><td>Else</td></tr>
+  <tr><td><code>&amp;</code></td><td>And</td><td><code>|</code></td><td>Or</td></tr>
+  <tr><td><code>~</code></td><td>Not</td><td><code>[ ]</code></td><td>Block/scope</td></tr>
+</table>
+
+<h2>FizzBuzz in PunkScript</h2>
+<pre><code><span class="kw">count</span><span class="op">:</span> zero<span class="op">.</span>
+<span class="kw">keep going</span><span class="op">...</span> <span class="op">[</span>
+  <span class="kw">add</span> one to <span class="op">(</span>count<span class="op">).</span>
+  <span class="op">(</span>count<span class="op">)</span> <span class="kw">beats</span> one hundred<span class="op">?</span> <span class="kw">stop</span><span class="op">!</span>
+  fizz<span class="op">:</span> <span class="op">(</span>count<span class="op">)</span> <span class="kw">split</span> by three <span class="kw">is</span> zero<span class="op">.</span>
+  buzz<span class="op">:</span> <span class="op">(</span>count<span class="op">)</span> <span class="kw">split</span> by five <span class="kw">is</span> zero<span class="op">.</span>
+  <span class="op">(</span>fizz<span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span>buzz<span class="op">)?</span> <span class="kw">say</span> <span class="str">"FizzBuzz"</span><span class="op">!</span>
+  <span class="op">-</span> <span class="op">(</span>fizz<span class="op">)?</span> <span class="kw">say</span> <span class="str">"Fizz"</span><span class="op">!</span>
+  <span class="op">-</span> <span class="op">(</span>buzz<span class="op">)?</span> <span class="kw">say</span> <span class="str">"Buzz"</span><span class="op">!</span>
+  <span class="op">-</span> <span class="kw">say</span> <span class="op">(</span>count<span class="op">)!</span>
+<span class="op">]</span></code></pre>
+</div>
+
+<!-- ─── Philosophy ─── -->
+<div class="philosophy">
+  <p><strong style="color:#ff3c78">PunkScript</strong> — a language that adapts to how you write, not the other way around</p>
+  <p><strong style="color:#ff3c78">3D Scanner</strong> — 3D scanning without cloud services, just your phone and your feet</p>
+  <p><strong style="color:#ff3c78">WiFi Mapper</strong> — understanding your physical space through signal, not floor plans</p>
+  <p style="margin-top:.6rem;color:#ccc"><em>All three share the same DNA: put the human first, keep it on-device, make complex things accessible.</em></p>
+</div>
+
+<div class="footer">PunkScript &mdash; March 2026</div>
+
+</body>
+</html>
