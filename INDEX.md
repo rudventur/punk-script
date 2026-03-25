@@ -1,6 +1,6 @@
 # PunkScript Repository Index
 
-> Everything in this repo — the language spec and the prototype apps — in one place.
+> Everything in this repo — the language spec, the prototype apps, and the social layer — in one place.
 
 ---
 
@@ -12,6 +12,15 @@
 | `groks cam scanner` | Flutter / Dart | Phone-based 3D scanner app (camera + pedometer → .obj mesh) |
 | `wifi-room-mapper.html` | HTML / JS | Interactive 3D WiFi signal mapper for rooms |
 | `unit_architect.html` | HTML | Unit Architect v1.0 — placeholder/stub |
+| `index.html` | HTML / JS | RudVentur Social landing page — "what is your poison?" |
+| `profile.html` | HTML / JS | Universal profile page (create + view, all entity types) |
+| `browse.html` | HTML / JS | Public directory — latest 50 profiles, filterable by type |
+| `invite.html` | HTML / JS | Invite link generator |
+| `universe.html` | HTML / JS | RudVentur Universe — starfield map of all projects |
+| `css/style.css` | CSS | Shared styles (Syne + Space Mono, dark punk aesthetic) |
+| `js/firebase.js` | JS | Firebase init, UID management, CRUD helpers, entity config |
+| `js/profile.js` | JS | Profile form logic, avatar picker, view mode |
+| `js/browse.js` | JS | Browse listing + type filter logic |
 
 ---
 
@@ -159,6 +168,51 @@ Placeholder file. Contains minimal HTML boilerplate with a message that the full
 
 ---
 
+## RudVentur Social — "what is your poison?"
+
+**Type:** HTML + vanilla JS + Firebase Realtime Database
+**Platform:** Browser (mobile-first), GitHub Pages
+
+A universal social platform where anyone — and anything — can have a profile. No signup. No auth. No walls.
+
+### Entity Types
+
+| Type | Icon | Description |
+|------|------|-------------|
+| Human | 👤 | a person. the classic. |
+| Bot | 🤖 | automated. tireless. possibly sentient. |
+| AI | 🧠 | language, attention, and a lot of parameters. |
+| Pet | 🐾 | paws. vibes. unconditional presence. |
+| Kingdom | 👑 | many as one. a collective with a name. |
+| Directory | 🏢 | a list that knows what it contains. |
+
+### Pages
+
+| Page | What it does |
+|------|-------------|
+| `index.html` | Landing — pick your entity type and go |
+| `profile.html` | Create/view profile with type-specific fields, emoji/URL avatar, share link |
+| `browse.html` | Public directory of all profiles, filterable by entity type |
+| `invite.html` | Generate invite links — warm hello, no forced signup |
+
+### Data
+
+- Profiles saved to Firebase at `rudventur-social/profiles/{uid}`
+- UID auto-generated and stored in localStorage — no authentication
+- Profiles cached locally for offline viewing
+- Firebase config placeholder in `js/firebase.js` — Rudy fills in his own
+
+---
+
+## universe.html — RudVentur Universe Map
+
+**Type:** HTML + JS
+**Platform:** Browser
+
+A standalone starfield page mapping every project in the RudVentur universe. Animated star background, glowing project cards with mouse-follow light effects, each world with its own colour. Links to Windows13, ChemVentur, Map Merger Venti, Cheese Ouiji Empire, RudVentur Social, WiFi Room Mapper, PunkScript, and a mystery slot for whatever comes next.
+
+---
+
 ## How It All Connects
 
 These aren't random files. They represent a philosophy: **tools built for people who think differently**.
@@ -166,9 +220,11 @@ These aren't random files. They represent a philosophy: **tools built for people
 - **PunkScript** — a language that adapts to how you write, not the other way around
 - **3D Scanner** — 3D scanning without cloud services, just your phone and your feet
 - **WiFi Mapper** — understanding your physical space through signal, not floor plans
+- **RudVentur Social** — the social layer that ties the universe together — humans, AIs, bots, pets, kingdoms
+- **Universe Map** — the front door to everything
 
-All three share the same DNA: put the human first, keep it on-device, make complex things accessible.
+All of them share the same DNA: put the human first, keep it on-device, make complex things accessible.
 
 ---
 
-*Index generated March 2026*
+*Index updated March 2026*
