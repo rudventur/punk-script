@@ -417,7 +417,8 @@ header{
 
     <div class="panel-section">
       <div class="panel-title">Tools</div>
-      <button class="tool-btn active" id="toolPin" onclick="setTool('pin')"><span class="icon">📍</span>Drop Pin</button>
+      <button class="tool-btn active" id="toolSelect" onclick="setTool('select')"><span class="icon">🖱️</span>Select / Move</button>
+      <button class="tool-btn" id="toolPin" onclick="setTool('pin')"><span class="icon">📍</span>Drop Pin</button>
       <button class="tool-btn" id="toolLine" onclick="setTool('line')"><span class="icon">〰️</span>Draw Line</button>
       <button class="tool-btn" id="toolFurn" onclick="setTool('furniture')"><span class="icon">🛋️</span>Add Furniture</button>
       <button class="tool-btn" id="toolEnv" onclick="setTool('env')"><span class="icon">🌳</span>Env Object</button>
@@ -586,7 +587,9 @@ const ctx = canvas.getContext('2d');
 // ── State ──────────────────────────────
 const state = {
   viewMode: '3d',       // '3d' | '2d' | 'env'
-  tool: 'pin',
+  tool: 'select',
+  selected: null,       // { type:'furniture'|'pin', index:N }
+  dragging: null,       // { offsetX, offsetZ } during move
   room: { w: 8, d: 6, h: 3 },
   walls: { N:'stud', S:'stud', E:'stud', W:'stud', FL:'concrete', CL:'stud' },
   selectedWall: null,
@@ -855,16 +858,19 @@ function draw2D() {
   for (let z=1; z<d; z++) { ctx.beginPath(); ctx.moveTo(ox,oy+z*scale); ctx.lineTo(ox+w*scale,oy+z*scale); ctx.stroke(); }
 
   // Furniture 2D
-  state.furniture.forEach(f => {
+  state.furniture.forEach((f, fi) => {
     const info = FURN_INFO[f.type] || FURN_INFO.table;
+    const isSel = state.selected && state.selected.type === 'furniture' && state.selected.index === fi;
     ctx.fillStyle = info.color;
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = isSel ? '#58a6ff' : 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = isSel ? 2.5 : 1;
     ctx.fillRect(ox+(f.x-info.w/2)*scale, oy+(f.z-info.d/2)*scale, info.w*scale, info.d*scale);
     ctx.strokeRect(ox+(f.x-info.w/2)*scale, oy+(f.z-info.d/2)*scale, info.w*scale, info.d*scale);
+    if (isSel) { ctx.shadowColor = '#58a6ff'; ctx.shadowBlur = 8; }
     ctx.font = '12px serif';
     ctx.textAlign='center';
     ctx.fillText(info.icon, ox+f.x*scale, oy+f.z*scale+5);
+    ctx.shadowBlur = 0;
   });
 
   // Signal heatmap (if pins exist)
@@ -894,13 +900,16 @@ function draw2D() {
   });
 
   // Pins 2D
-  state.pins.forEach(pin => {
+  state.pins.forEach((pin, pi) => {
     const col = dbmColor(pin.dbm);
+    const isSel = state.selected && state.selected.type === 'pin' && state.selected.index === pi;
     ctx.beginPath();
-    ctx.arc(ox+pin.x*scale, oy+pin.z*scale, 6, 0, Math.PI*2);
+    ctx.arc(ox+pin.x*scale, oy+pin.z*scale, isSel ? 9 : 6, 0, Math.PI*2);
     ctx.fillStyle = col;
     ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.strokeStyle = isSel ? '#58a6ff' : '#fff';
+    ctx.lineWidth = isSel ? 2.5 : 1.5;
+    ctx.stroke();
     ctx.fillStyle='#fff'; ctx.font='bold 10px DM Mono,monospace'; ctx.textAlign='center';
     ctx.fillText(pin.dbm, ox+pin.x*scale, oy+pin.z*scale-10);
   });
@@ -1070,10 +1079,61 @@ function handleGyro(e) {
   draw();
 }
 
+// ── Screen coords → room coords ───────
+function screenToRoom(cx, cy) {
+  const { w, d } = state.room;
+  let rx, rz;
+  if (state.viewMode === '2d') {
+    const scale = Math.min((canvas.width-80)/w, (canvas.height-80)/d);
+    const ox = (canvas.width-w*scale)/2, oy = (canvas.height-d*scale)/2;
+    rx = (cx-ox)/scale; rz = (cy-oy)/scale;
+  } else {
+    rx = w/2 + (cx - canvas.width/2) / 60 / state.camera.zoom;
+    rz = d/2 + (cy - canvas.height/2) / 60 / state.camera.zoom;
+  }
+  return { rx, rz };
+}
+
+// ── Hit test: find furniture or pin under cursor ──
+function hitTest(cx, cy) {
+  const { rx, rz } = screenToRoom(cx, cy);
+  const { w, d } = state.room;
+  // Check furniture (reverse order = topmost first)
+  for (let i = state.furniture.length - 1; i >= 0; i--) {
+    const f = state.furniture[i];
+    const info = FURN_INFO[f.type] || FURN_INFO.table;
+    const hw = info.w/2, hd = info.d/2;
+    if (rx >= f.x - hw && rx <= f.x + hw && rz >= f.z - hd && rz <= f.z + hd) {
+      return { type: 'furniture', index: i, offsetX: rx - f.x, offsetZ: rz - f.z };
+    }
+  }
+  // Check pins (0.3m hit radius)
+  for (let i = state.pins.length - 1; i >= 0; i--) {
+    const p = state.pins[i];
+    if (Math.hypot(rx - p.x, rz - p.z) < 0.3) {
+      return { type: 'pin', index: i, offsetX: rx - p.x, offsetZ: rz - p.z };
+    }
+  }
+  return null;
+}
+
 // ── Mouse / Touch ──────────────────────
 canvas.addEventListener('mousedown', e => {
   state.drag = { active: true, last: { x:e.clientX, y:e.clientY }, button: e.button };
-  if (e.button === 0 && state.tool === 'pin') {
+
+  if (e.button === 0 && state.tool === 'select') {
+    const hit = hitTest(e.clientX, e.clientY);
+    if (hit) {
+      state.selected = { type: hit.type, index: hit.index };
+      state.dragging = { offsetX: hit.offsetX, offsetZ: hit.offsetZ };
+      canvas.style.cursor = 'grabbing';
+      draw();
+    } else {
+      state.selected = null;
+      state.dragging = null;
+      draw();
+    }
+  } else if (e.button === 0 && state.tool === 'pin') {
     handleClick(e.clientX, e.clientY);
   } else if (e.button === 0 && state.tool === 'env' && state.viewMode === 'env') {
     handleEnvClick(e.clientX, e.clientY);
@@ -1082,13 +1142,33 @@ canvas.addEventListener('mousedown', e => {
 
 canvas.addEventListener('mousemove', e => {
   if (!state.drag.active) return;
-  if (state.drag.button === 0 && state.tool === 'orbit') {
+
+  // Dragging a selected object
+  if (state.dragging && state.tool === 'select') {
+    const { rx, rz } = screenToRoom(e.clientX, e.clientY);
+    const { w, d } = state.room;
+    const nx = Math.max(0.1, Math.min(w - 0.1, rx - state.dragging.offsetX));
+    const nz = Math.max(0.1, Math.min(d - 0.1, rz - state.dragging.offsetZ));
+    if (state.selected.type === 'furniture') {
+      state.furniture[state.selected.index].x = nx;
+      state.furniture[state.selected.index].z = nz;
+    } else if (state.selected.type === 'pin') {
+      state.pins[state.selected.index].x = parseFloat(nx.toFixed(2));
+      state.pins[state.selected.index].z = parseFloat(nz.toFixed(2));
+    }
+    draw();
+    return;
+  }
+
+  if (state.drag.button === 0 && (state.tool === 'orbit' || state.tool === 'select' && !state.dragging)) {
     const dx = e.clientX - state.drag.last.x;
     const dy = e.clientY - state.drag.last.y;
-    state.camera.rotY += dx * 0.008;
-    state.camera.rotX += dy * 0.008;
-    state.camera.rotX = Math.max(-1.4, Math.min(1.4, state.camera.rotX));
-    draw();
+    if (state.tool === 'orbit') {
+      state.camera.rotY += dx * 0.008;
+      state.camera.rotX += dy * 0.008;
+      state.camera.rotX = Math.max(-1.4, Math.min(1.4, state.camera.rotX));
+      draw();
+    }
   } else if (state.drag.button === 2) {
     state.camera.panX += e.clientX - state.drag.last.x;
     state.camera.panY += e.clientY - state.drag.last.y;
@@ -1097,7 +1177,14 @@ canvas.addEventListener('mousemove', e => {
   state.drag.last = { x:e.clientX, y:e.clientY };
 });
 
-canvas.addEventListener('mouseup', () => { state.drag.active = false; });
+canvas.addEventListener('mouseup', () => {
+  state.drag.active = false;
+  if (state.dragging) {
+    state.dragging = null;
+    canvas.style.cursor = state.tool === 'select' ? 'default' : (state.tool === 'orbit' ? 'grab' : 'crosshair');
+    if (state.selected && state.selected.type === 'pin') updatePinList();
+  }
+});
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('wheel', e => {
   state.camera.zoom *= e.deltaY > 0 ? 0.92 : 1.08;
@@ -1109,14 +1196,41 @@ canvas.addEventListener('wheel', e => {
 let lastTouches = [];
 canvas.addEventListener('touchstart', e => {
   lastTouches = Array.from(e.touches).map(t => ({ x:t.clientX, y:t.clientY }));
-  if (e.touches.length === 1 && state.tool === 'pin') {
-    handleClick(e.touches[0].clientX, e.touches[0].clientY);
+  if (e.touches.length === 1) {
+    if (state.tool === 'select') {
+      const hit = hitTest(e.touches[0].clientX, e.touches[0].clientY);
+      if (hit) {
+        state.selected = { type: hit.type, index: hit.index };
+        state.dragging = { offsetX: hit.offsetX, offsetZ: hit.offsetZ };
+        draw();
+      } else {
+        state.selected = null;
+        state.dragging = null;
+      }
+    } else if (state.tool === 'pin') {
+      handleClick(e.touches[0].clientX, e.touches[0].clientY);
+    }
   }
 }, { passive:true });
 
 canvas.addEventListener('touchmove', e => {
   const touches = Array.from(e.touches).map(t => ({ x:t.clientX, y:t.clientY }));
-  if (touches.length === 1 && state.tool === 'orbit') {
+
+  // Dragging selected object on touch
+  if (touches.length === 1 && state.dragging && state.tool === 'select') {
+    const { rx, rz } = screenToRoom(touches[0].x, touches[0].y);
+    const { w, d } = state.room;
+    const nx = Math.max(0.1, Math.min(w - 0.1, rx - state.dragging.offsetX));
+    const nz = Math.max(0.1, Math.min(d - 0.1, rz - state.dragging.offsetZ));
+    if (state.selected.type === 'furniture') {
+      state.furniture[state.selected.index].x = nx;
+      state.furniture[state.selected.index].z = nz;
+    } else if (state.selected.type === 'pin') {
+      state.pins[state.selected.index].x = parseFloat(nx.toFixed(2));
+      state.pins[state.selected.index].z = parseFloat(nz.toFixed(2));
+    }
+    draw();
+  } else if (touches.length === 1 && state.tool === 'orbit') {
     const dx = touches[0].x - lastTouches[0].x;
     const dy = touches[0].y - lastTouches[0].y;
     state.camera.rotY += dx * 0.008;
@@ -1132,24 +1246,22 @@ canvas.addEventListener('touchmove', e => {
   lastTouches = touches;
 }, { passive:true });
 
+canvas.addEventListener('touchend', () => {
+  if (state.dragging) {
+    state.dragging = null;
+    if (state.selected && state.selected.type === 'pin') updatePinList();
+  }
+});
+
 // ── Click handlers ─────────────────────
 function handleClick(cx, cy) {
   if (state.viewMode !== '3d' && state.viewMode !== '2d') return;
-  // Convert click to room coordinates (rough)
   const { w, d } = state.room;
-  let rx, rz, ry = 0;
-  if (state.viewMode === '2d') {
-    const scale = Math.min((canvas.width-80)/w, (canvas.height-80)/d);
-    const ox = (canvas.width-w*scale)/2, oy = (canvas.height-d*scale)/2;
-    rx = (cx-ox)/scale; rz = (cy-oy)/scale;
-    if (rx<0||rx>w||rz<0||rz>d) return;
-  } else {
-    rx = w/2 + (cx - canvas.width/2) / 60 / state.camera.zoom;
-    rz = d/2 + (cy - canvas.height/2) / 60 / state.camera.zoom;
-    rx = Math.max(0.1, Math.min(w-0.1, rx));
-    rz = Math.max(0.1, Math.min(d-0.1, rz));
-  }
-  state.pendingPin = { x: parseFloat(rx.toFixed(2)), y: ry, z: parseFloat(rz.toFixed(2)) };
+  const { rx, rz } = screenToRoom(cx, cy);
+  if (state.viewMode === '2d' && (rx<0||rx>w||rz<0||rz>d)) return;
+  const clampedX = Math.max(0.1, Math.min(w-0.1, rx));
+  const clampedZ = Math.max(0.1, Math.min(d-0.1, rz));
+  state.pendingPin = { x: parseFloat(clampedX.toFixed(2)), y: 0, z: parseFloat(clampedZ.toFixed(2)) };
   // Pre-fill with live reading
   if (state.liveDbm) {
     document.getElementById('pinDbm').value = state.liveDbm;
@@ -1174,18 +1286,22 @@ function handleEnvClick(cx, cy) {
 // ── Tools ──────────────────────────────
 function setTool(t) {
   state.tool = t;
-  ['pin','line','furniture','env','orbit'].forEach(x => {
+  state.selected = null;
+  state.dragging = null;
+  ['select','pin','line','furniture','env','orbit'].forEach(x => {
     document.getElementById('tool'+x.charAt(0).toUpperCase()+x.slice(1))?.classList.remove('active');
   });
   document.getElementById('tool'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.add('active');
-  canvas.style.cursor = t === 'orbit' ? 'grab' : 'crosshair';
+  canvas.style.cursor = t === 'orbit' ? 'grab' : (t === 'select' ? 'default' : 'crosshair');
   document.getElementById('canvasHint').textContent = {
+    select: 'click to select · drag to move furniture & pins',
     pin: 'click to drop signal pin',
     line: 'click two pins to draw a signal line',
     furniture: 'click to place selected furniture',
     env: 'switch to Surroundings view, then click to place',
     orbit: 'drag to orbit · right-drag to pan · scroll to zoom'
   }[t];
+  draw();
 }
 
 function setViewMode(m) {
@@ -1350,7 +1466,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 // ── Init ───────────────────────────────
 resize();
 startLiveReading();
-setTool('pin');
+setTool('select');
 
 // Demo pin to show it's working
 setTimeout(() => {

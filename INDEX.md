@@ -10,7 +10,9 @@
 |------|------|-------------|
 | `PUNKSCRIPT.md` | Spec / Manifesto | The PunkScript language specification v0.2 |
 | `groks cam scanner` | Flutter / Dart | Phone-based 3D scanner app (camera + pedometer → .obj mesh) |
-| `wifi-room-mapper.html` | HTML / JS | Interactive 3D WiFi signal mapper for rooms |
+| `wifi-room-mapper.html` | HTML / JS / Canvas | WiFi signal mapper v1 — 2D/3D canvas, heatmaps, select & move |
+| `wifi-mapper-v2.html` | HTML / JS / Three.js | WiFi Room Mapper v2.0 — full 3D with drag, multi-room, signal heatmap, save/load |
+| `wifi-mapper-v2-cam.html` | HTML / JS / Three.js | WiFi Room Mapper v2.1 — v2.0 + live phone camera background, frame capture |
 | `unit_architect.html` | HTML | Unit Architect v1.0 — placeholder/stub |
 | `index.html` | HTML / JS | RudVentur Social landing page — "what is your poison?" |
 | `profile.html` | HTML / JS | Universal profile page (create + view, all entity types) |
@@ -159,6 +161,55 @@ An interactive 3D room modelling tool that maps WiFi signal strength throughout 
 | Stud wall | -3 |
 | Glass | -2 |
 | Open | 0 |
+
+---
+
+## wifi-mapper-v2.html — WiFi Room Mapper v2.0 (Three.js)
+
+**Language:** HTML + JS + Three.js
+**Platform:** Browser
+**Size:** ~450 lines, self-contained single file
+
+### What it does
+
+A full 3D rebuild of the WiFi mapper using Three.js. No more canvas — real 3D with orbit controls, shadows, and fog.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Real 3D rendering** | Three.js with OrbitControls, shadows, ambient + directional lighting |
+| **Multi-room support** | Add multiple rooms, each with walls, floor, ceiling |
+| **Drag controls** | Three.js DragControls — click and drag anything |
+| **Properties panel** | Click to select, resize with W/D/H sliders, delete |
+| **WiFi pins** | Glowing spheres with signal strength, draggable |
+| **Signal heatmap** | Vertex-coloured floors based on distance from WiFi pins |
+| **Walk replay** | Camera follows a generated path through the scene |
+| **Outside world** | Sky sphere, ground plane, neighbour buildings |
+| **Save / Load** | Full scene serialized to localStorage via ObjectLoader |
+| **Auto-save** | Every 8 seconds |
+
+---
+
+## wifi-mapper-v2-cam.html — WiFi Room Mapper v2.1 (Camera Ready)
+
+**Language:** HTML + JS + Three.js
+**Platform:** Browser (mobile-optimised — uses rear camera)
+**Size:** Complete v2.0 + camera integration
+
+### What it does
+
+Everything from v2.0 plus live phone camera as the 3D scene background — AR-like room scanning.
+
+### Camera Features
+
+| Feature | Description |
+|---------|-------------|
+| **Live camera background** | VideoTexture from rear camera replaces scene background |
+| **Frame capture** | Snapshot video to data URL, stored for future photogrammetry |
+| **Reference planes** | Captured frames placed as textured planes in the 3D scene |
+| **Camera toggle** | Start/stop camera, proper stream cleanup |
+| **Rear camera default** | `facingMode: 'environment'` for room scanning |
 
 ---
 
