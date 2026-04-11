@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RudVentur Social</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+  #type-game-tile::before { background: var(--accent-hot) !important; }
+  #type-game-tile:hover { border-color: var(--accent-hot); box-shadow: 0 4px 20px rgba(255,60,120,0.2); color: var(--text); }
+</style>
 </head>
 <body>
 
@@ -39,6 +43,17 @@
       '<div class="entity-desc">' + info.desc + '</div>';
     grid.appendChild(card);
   });
+
+  // Type Game tile
+  const gameCard = document.createElement('a');
+  gameCard.href = 'type-game.html';
+  gameCard.id = 'type-game-tile';
+  gameCard.className = 'entity-card';
+  gameCard.innerHTML =
+    '<span class="entity-icon">⌨️</span>' +
+    '<div class="entity-label">Type Game</div>' +
+    '<div class="entity-desc">train your fingers. 8 languages. 5 levels.</div>';
+  grid.appendChild(gameCard);
 
   // Check for invite
   const params = new URLSearchParams(window.location.search);
