@@ -295,6 +295,21 @@
         }
         .btn-tiny:hover { border-color: var(--neon-yellow); color: var(--neon-yellow); }
 
+        /* --- Start Line --- */
+        .start-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        input[type="number"] {
+            flex: 1;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--neon-green);
+            padding: 8px;
+            font-family: var(--font-stack);
+            font-size: 1rem;
+            width: 100%;
+        }
+        input[type="number"]:focus { outline: none; border-color: var(--neon-green); }
+        #line-info { font-size: 0.75rem; color: var(--text-dim); display: block; }
+
         /* --- Difficulty Buttons --- */
         .diff-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .diff-btn {
@@ -415,6 +430,16 @@
                     <span>Randomize Built-in Code</span>
                     <input type="checkbox" id="check-random" checked>
                 </div>
+            </div>
+
+            <!-- Start Line -->
+            <div class="menu-card">
+                <div class="card-title">Start Line</div>
+                <div class="start-row">
+                    <input type="number" id="start-line" min="1" value="1" placeholder="1">
+                    <button class="btn-tiny" id="random-line-btn" style="white-space:nowrap;">&#9654; Random</button>
+                </div>
+                <span id="line-info">— lines available</span>
             </div>
 
             <!-- Right Column: Local Import -->
@@ -594,6 +619,24 @@
             { id: 'nightmare', label: 'NIGHTMARE', strict: true,  maxLen: 999, hideNext: true,  hidePrev: true,  shake: true,  desc: 'All lines · strict · no previews · screen shake'  },
         ];
         let selectedDifficultyIdx = 2; // default: MEDIUM
+        let startLineNum = 1; // 1-based
+
+        function getLinePool() {
+            if (externalContentLoaded) return gameLines;
+            const diff = DIFFICULTIES[selectedDifficultyIdx];
+            const langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+            let pool = langs.flatMap(l => languageDatabase[l]);
+            if (diff.maxLen < 999) pool = pool.filter(l => l.trim().length <= diff.maxLen);
+            return pool;
+        }
+
+        function updateLineInfo() {
+            const total = getLinePool().length;
+            const el = document.getElementById('line-info');
+            if (el) el.textContent = total + ' line' + (total !== 1 ? 's' : '') + ' available';
+            const inp = document.getElementById('start-line');
+            if (inp) inp.max = total;
+        }
 
         // --- 3. DOM Elements ---
         const els = {
@@ -662,6 +705,25 @@
                 els.checkStrict.checked = settings.strict;
             });
         });
+
+        document.getElementById('start-line').addEventListener('input', e => {
+            startLineNum = Math.max(1, parseInt(e.target.value) || 1);
+        });
+
+        document.getElementById('random-line-btn').addEventListener('click', () => {
+            const total = getLinePool().length;
+            if (total === 0) return;
+            const rand = Math.floor(Math.random() * total) + 1;
+            startLineNum = rand;
+            document.getElementById('start-line').value = rand;
+        });
+
+        // Update line count whenever language or difficulty changes
+        document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', updateLineInfo));
+        document.getElementById('lang-all-btn').addEventListener('click', updateLineInfo);
+        document.getElementById('lang-none-btn').addEventListener('click', updateLineInfo);
+        document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', updateLineInfo));
+        updateLineInfo(); // init on load
 
         els.checkStrict.addEventListener('change', e => settings.strict = e.target.checked);
         els.checkRandom.addEventListener('change', e => settings.random = e.target.checked);
@@ -749,6 +811,10 @@
                     gameLines.sort(() => Math.random() - 0.5);
                 }
             }
+
+            // Apply start line offset
+            const startIdx = Math.min(startLineNum - 1, gameLines.length - 1);
+            if (startIdx > 0) gameLines = gameLines.slice(startIdx);
 
             if (gameLines.length === 0) {
                 alert("No code loaded! Select a language or import a file.");
