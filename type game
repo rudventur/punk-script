@@ -295,6 +295,37 @@
         }
         .btn-tiny:hover { border-color: var(--neon-yellow); color: var(--neon-yellow); }
 
+        /* --- Difficulty Buttons --- */
+        .diff-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .diff-btn {
+            flex: 1;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 8px 4px;
+            font-family: var(--font-stack);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .diff-btn.active { color: #000; font-weight: bold; }
+        .diff-btn[data-diff="0"].active { background: var(--neon-green);  border-color: var(--neon-green);  }
+        .diff-btn[data-diff="1"].active { background: var(--neon-blue);   border-color: var(--neon-blue);   }
+        .diff-btn[data-diff="2"].active { background: var(--neon-yellow); border-color: var(--neon-yellow); }
+        .diff-btn[data-diff="3"].active { background: var(--neon-orange); border-color: var(--neon-orange); }
+        .diff-btn[data-diff="4"].active { background: var(--neon-pink);   border-color: var(--neon-pink);   }
+        #diff-desc { font-size: 0.75rem; color: var(--text-dim); text-align: center; min-height: 1.2rem; }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-6px) rotate(-0.5deg); }
+            40% { transform: translateX(6px) rotate(0.5deg); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        .nightmare-shake { animation: shake 0.3s ease; }
+
         @keyframes blink { 50% { opacity: 0; } }
         
         @media(max-width: 768px) {
@@ -358,6 +389,19 @@
                     <button class="btn-tiny" id="lang-all-btn">Select All</button>
                     <button class="btn-tiny" id="lang-none-btn">Clear</button>
                 </div>
+            </div>
+
+            <!-- Difficulty -->
+            <div class="menu-card" style="grid-column: span 2;">
+                <div class="card-title">Difficulty</div>
+                <div class="diff-row">
+                    <button class="diff-btn" data-diff="0">BABY</button>
+                    <button class="diff-btn" data-diff="1">EASY</button>
+                    <button class="diff-btn active" data-diff="2">MEDIUM</button>
+                    <button class="diff-btn" data-diff="3">HARD</button>
+                    <button class="diff-btn" data-diff="4">NIGHTMARE</button>
+                </div>
+                <div id="diff-desc">All lines · strict mode · full preview</div>
             </div>
 
             <!-- Left Column: Settings -->
@@ -541,6 +585,16 @@
         // Language selection
         let selectedLanguages = new Set(LANG_KEYS);
 
+        // --- Difficulty Config ---
+        const DIFFICULTIES = [
+            { id: 'baby',      label: 'BABY',      strict: false, maxLen: 30,  hideNext: false, hidePrev: false, shake: false, desc: 'Short lines · case-insensitive · full preview'    },
+            { id: 'easy',      label: 'EASY',      strict: false, maxLen: 999, hideNext: false, hidePrev: false, shake: false, desc: 'All lines · case-insensitive · full preview'      },
+            { id: 'medium',    label: 'MEDIUM',    strict: true,  maxLen: 999, hideNext: false, hidePrev: false, shake: false, desc: 'All lines · strict mode · full preview'           },
+            { id: 'hard',      label: 'HARD',      strict: true,  maxLen: 999, hideNext: true,  hidePrev: false, shake: false, desc: 'All lines · strict mode · next line hidden'       },
+            { id: 'nightmare', label: 'NIGHTMARE', strict: true,  maxLen: 999, hideNext: true,  hidePrev: true,  shake: true,  desc: 'All lines · strict · no previews · screen shake'  },
+        ];
+        let selectedDifficultyIdx = 2; // default: MEDIUM
+
         // --- 3. DOM Elements ---
         const els = {
             prev: document.getElementById('line-prev'),
@@ -597,6 +651,18 @@
         })();
 
         // --- 5. Event Listeners ---
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.diff);
+                selectedDifficultyIdx = idx;
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('diff-desc').textContent = DIFFICULTIES[idx].desc;
+                settings.strict = DIFFICULTIES[idx].strict;
+                els.checkStrict.checked = settings.strict;
+            });
+        });
+
         els.checkStrict.addEventListener('change', e => settings.strict = e.target.checked);
         els.checkRandom.addEventListener('change', e => settings.random = e.target.checked);
         els.startBtn.addEventListener('click', startGame);
@@ -673,8 +739,12 @@
         function startGame() {
             // Determine Source
             if (!externalContentLoaded) {
+                const diff = DIFFICULTIES[selectedDifficultyIdx];
                 const langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
                 gameLines = langs.flatMap(l => languageDatabase[l]);
+                if (diff.maxLen < 999) {
+                    gameLines = gameLines.filter(l => l.trim().length <= diff.maxLen);
+                }
                 if (settings.random) {
                     gameLines.sort(() => Math.random() - 0.5);
                 }
@@ -747,7 +817,13 @@
                     if (!isCorrect && !activeMistakes[i]) {
                         activeMistakes[i] = Date.now();
                         totalMistakes++;
-                        updateHud(); 
+                        updateHud();
+                        if (DIFFICULTIES[selectedDifficultyIdx].shake) {
+                            const gc = document.getElementById('game-container');
+                            gc.classList.remove('nightmare-shake');
+                            void gc.offsetWidth; // reflow to restart animation
+                            gc.classList.add('nightmare-shake');
+                        }
                     } else if (isCorrect && activeMistakes[i]) {
                         totalRecoveryTime += (Date.now() - activeMistakes[i]);
                         recoveryCount++;
@@ -767,10 +843,11 @@
             if (currentInput.length === target.length) html += `<span class="cursor"></span>`;
             els.curr.innerHTML = html;
 
-            els.prev.textContent = currentLineIndex > 0 ? gameLines[currentLineIndex-1] : "";
-            els.prev.style.visibility = currentLineIndex > 0 ? "visible" : "hidden";
-            els.next.textContent = currentLineIndex < gameLines.length-1 ? gameLines[currentLineIndex+1] : "";
-            els.next.style.visibility = currentLineIndex < gameLines.length-1 ? "visible" : "hidden";
+            const diff = DIFFICULTIES[selectedDifficultyIdx];
+            els.prev.textContent = (currentLineIndex > 0 && !diff.hidePrev) ? gameLines[currentLineIndex-1] : "";
+            els.prev.style.visibility = (currentLineIndex > 0 && !diff.hidePrev) ? "visible" : "hidden";
+            els.next.textContent = (currentLineIndex < gameLines.length-1 && !diff.hideNext) ? gameLines[currentLineIndex+1] : "";
+            els.next.style.visibility = (currentLineIndex < gameLines.length-1 && !diff.hideNext) ? "visible" : "hidden";
 
             // Completion Check
             let lineComplete = (currentInput.length === target.length);
