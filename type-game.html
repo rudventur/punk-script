@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zi's Retro Typer V4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #050608;
+            --panel-bg: #0f111a;
+            --text-main: #e0e6ed;
+            --text-dim: #586375;
+            
+            --neon-green: #00ff9d;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #fcee0a;
+            --neon-purple: #bd00ff;
+            --neon-orange: #ff9d00;
+            
+            --font-stack: 'Fira Code', monospace;
+            --glass: rgba(15, 17, 26, 0.9);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* --- Top HUD --- */
+        header {
+            position: absolute;
+            top: 10px;
+            width: 95%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            background: var(--panel-bg);
+            padding: 10px 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .brand { color: var(--neon-blue); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .hud-group { display: flex; gap: 20px; }
+        .hud-item { text-align: center; }
+        .hud-val { font-size: 1.2rem; font-weight: bold; display: block; }
+        .hud-lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+
+        .c-wpm { color: var(--neon-purple); }
+        .c-mistakes { color: var(--neon-pink); }
+        .c-recovery { color: var(--neon-orange); }
+
+        /* --- Main Game Area --- */
+        #game-container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-board {
+            width: 100%;
+            position: relative;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .code-line {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1.5rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-radius: 6px;
+            transition: all 0.3s;
+            position: relative;
+            padding-right: 100px; 
+        }
+
+        .line-prev { color: var(--neon-green); opacity: 0.3; transform: scale(0.9) translateY(-10px); }
+        .line-current { 
+            color: var(--text-main); 
+            background: rgba(255,255,255,0.03); 
+            border-left: 4px solid var(--neon-blue); 
+            z-index: 10; 
+        }
+        .line-next { color: var(--text-dim); opacity: 0.3; transform: scale(0.9) translateY(10px); }
+
+        .char.correct { color: var(--neon-blue); text-shadow: 0 0 5px rgba(0,240,255,0.4); }
+        .char.wrong { color: var(--neon-pink); background: rgba(255,0,85,0.1); }
+        .char.pending { color: var(--text-dim); }
+
+        .cursor {
+            display: inline-block;
+            width: 10px; height: 1.5rem;
+            background: var(--neon-yellow);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        #skip-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            padding: 5px 15px;
+            font-family: var(--font-stack);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+            transition: 0.2s;
+            z-index: 20;
+        }
+        #skip-btn:hover { background: var(--neon-pink); color: #fff; opacity: 1; box-shadow: 0 0 10px var(--neon-pink); }
+
+        /* --- Bottom Stats --- */
+        #stats-panel {
+            width: 90%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: var(--glass);
+            border-top: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-box.blue { border-color: var(--neon-blue); }
+        .stat-box.green { border-color: var(--neon-green); }
+        .stat-box.pink { border-color: var(--neon-pink); }
+        .stat-box.purple { border-color: var(--neon-purple); }
+
+        .stat-val { font-size: 1.2rem; font-weight: bold; }
+        .stat-lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+
+        /* --- Overlay & Grid Layout for Settings --- */
+        #ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 6, 8, 0.98);
+            z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { color: var(--neon-blue); margin-bottom: 20px; font-size: 2.5rem; text-shadow: 0 0 10px var(--neon-blue); }
+        
+        /* Grid System for Start Menu */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        .menu-card {
+            background: #1a1d29;
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .card-title {
+            color: var(--neon-yellow);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        /* Settings Rows */
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        input[type="checkbox"] { accent-color: var(--neon-blue); width: 18px; height: 18px; cursor: pointer; }
+
+        /* Inputs */
+        input[type="text"] {
+            width: 100%;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--neon-green);
+            padding: 8px;
+            font-family: var(--font-stack);
+            margin-bottom: 10px;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--neon-green); }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            background: var(--neon-green); color: #000;
+            border: none; padding: 12px;
+            font-family: var(--font-stack); font-weight: bold; font-size: 1rem;
+            cursor: pointer; text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-secondary { background: #333; color: #fff; margin-top: 10px;}
+        .btn-secondary:hover { background: #444; }
+
+        /* File Input */
+        .file-label {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            border: 1px dashed var(--neon-blue);
+            color: var(--neon-blue);
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        .file-label:hover { background: rgba(0, 240, 255, 0.1); }
+        input[type="file"] { display: none; }
+        #file-name { color: var(--text-dim); font-size: 0.8rem; display: block; }
+
+        /* Results */
+        #skipped-list {
+            max-height: 150px; overflow-y: auto;
+            background: rgba(255,0,85,0.1); border: 1px solid var(--neon-pink);
+            padding: 10px; width: 80%; max-width: 600px;
+            margin-bottom: 20px; font-size: 0.9rem; color: #ffadad;
+        }
+
+        /* --- Language Buttons --- */
+        .lang-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        .lang-btn {
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 5px 14px;
+            font-family: var(--font-stack);
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .lang-btn.active {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0,240,255,0.08);
+        }
+        .lang-btn:hover:not(.active) { border-color: #666; color: var(--text-main); }
+        .lang-actions { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-tiny {
+            background: transparent;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 3px 10px;
+            font-family: var(--font-stack);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .btn-tiny:hover { border-color: var(--neon-yellow); color: var(--neon-yellow); }
+
+        /* --- Start Line --- */
+        .start-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        input[type="number"] {
+            flex: 1;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--neon-green);
+            padding: 8px;
+            font-family: var(--font-stack);
+            font-size: 1rem;
+            width: 100%;
+        }
+        input[type="number"]:focus { outline: none; border-color: var(--neon-green); }
+        #line-info { font-size: 0.75rem; color: var(--text-dim); display: block; }
+
+        /* --- Difficulty Buttons --- */
+        .diff-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .diff-btn {
+            flex: 1;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 8px 4px;
+            font-family: var(--font-stack);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .diff-btn.active { color: #000; font-weight: bold; }
+        .diff-btn[data-diff="0"].active { background: var(--neon-green);  border-color: var(--neon-green);  }
+        .diff-btn[data-diff="1"].active { background: var(--neon-blue);   border-color: var(--neon-blue);   }
+        .diff-btn[data-diff="2"].active { background: var(--neon-yellow); border-color: var(--neon-yellow); }
+        .diff-btn[data-diff="3"].active { background: var(--neon-orange); border-color: var(--neon-orange); }
+        .diff-btn[data-diff="4"].active { background: var(--neon-pink);   border-color: var(--neon-pink);   }
+        #diff-desc { font-size: 0.75rem; color: var(--text-dim); text-align: center; min-height: 1.2rem; }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-6px) rotate(-0.5deg); }
+            40% { transform: translateX(6px) rotate(0.5deg); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        .nightmare-shake { animation: shake 0.3s ease; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        @media(max-width: 768px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .code-line { padding-right: 60px; font-size: 1.1rem; }
+            #stats-panel { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD -->
+    <header>
+        <div class="brand">ZI // TYPER_V4</div>
+        <div class="hud-group">
+            <div class="hud-item">
+                <span class="hud-val c-wpm" id="hud-wpm">0</span>
+                <span class="hud-lbl">WPM</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-val c-mistakes" id="hud-mistakes">0</span>
+                <span class="hud-lbl">Mistakes</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-val c-recovery" id="hud-recovery">0ms</span>
+                <span class="hud-lbl">Recovery</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Game Area -->
+    <div id="game-container">
+        <div id="game-board">
+            <div id="line-prev" class="code-line line-prev"></div>
+            <div id="line-current" class="code-line line-current"></div>
+            <button id="skip-btn" title="Press Tab">Skip</button>
+            <div id="line-next" class="code-line line-next"></div>
+        </div>
+    </div>
+
+    <!-- Stats Footer -->
+    <div id="stats-panel">
+        <div class="stat-box blue"><span class="stat-val" id="count-letters">0</span><span class="stat-lbl">Letters</span></div>
+        <div class="stat-box green"><span class="stat-val" id="count-numbers">0</span><span class="stat-lbl">Numbers</span></div>
+        <div class="stat-box pink"><span class="stat-val" id="count-symbols">0</span><span class="stat-lbl">Symbols</span></div>
+        <div class="stat-box purple"><span class="stat-val" id="count-skipped">0</span><span class="stat-lbl">Skipped</span></div>
+    </div>
+
+    <input type="text" id="hidden-input" autocomplete="off">
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <h1 id="ui-title">SYSTEM READY</h1>
+        
+        <div class="menu-grid">
+            <!-- Language Selector -->
+            <div class="menu-card" style="grid-column: span 2;">
+                <div class="card-title">Language</div>
+                <div id="lang-grid" class="lang-grid"></div>
+                <div class="lang-actions">
+                    <button class="btn-tiny" id="lang-all-btn">Select All</button>
+                    <button class="btn-tiny" id="lang-none-btn">Clear</button>
+                </div>
+                <div class="setting-row" style="margin-top:10px;">
+                    <span>Random Language Mode <span style="color:var(--text-dim);font-size:0.75rem;">(picks one language at random each game)</span></span>
+                    <input type="checkbox" id="check-random-lang">
+                </div>
+            </div>
+
+            <!-- Difficulty -->
+            <div class="menu-card" style="grid-column: span 2;">
+                <div class="card-title">Difficulty</div>
+                <div class="diff-row">
+                    <button class="diff-btn" data-diff="0">BABY</button>
+                    <button class="diff-btn" data-diff="1">EASY</button>
+                    <button class="diff-btn active" data-diff="2">MEDIUM</button>
+                    <button class="diff-btn" data-diff="3">HARD</button>
+                    <button class="diff-btn" data-diff="4">NIGHTMARE</button>
+                </div>
+                <div id="diff-desc">All lines · strict mode · full preview</div>
+            </div>
+
+            <!-- Left Column: Settings -->
+            <div class="menu-card">
+                <div class="card-title">Settings</div>
+                <div class="setting-row">
+                    <span>Strict Mode (Case Sensitive)</span>
+                    <input type="checkbox" id="check-strict" checked>
+                </div>
+                <div class="setting-row">
+                    <span>Randomize Built-in Code</span>
+                    <input type="checkbox" id="check-random" checked>
+                </div>
+            </div>
+
+            <!-- Start Line -->
+            <div class="menu-card">
+                <div class="card-title">Start Line</div>
+                <div class="start-row">
+                    <input type="number" id="start-line" min="1" value="1" placeholder="1">
+                    <button class="btn-tiny" id="random-line-btn" style="white-space:nowrap;">&#9654; Random</button>
+                </div>
+                <span id="line-info">— lines available</span>
+            </div>
+
+            <!-- Right Column: Local Import -->
+            <div class="menu-card">
+                <div class="card-title">Import Local</div>
+                <label for="file-upload" class="file-label">Select .txt File</label>
+                <input type="file" id="file-upload" accept=".txt">
+                <span id="file-name">No file selected</span>
+            </div>
+
+            <!-- Bottom: Remote Import -->
+            <div class="menu-card" style="grid-column: span 2;">
+                <div class="card-title">Import Remote (GitHub)</div>
+                <input type="text" id="github-url" placeholder="Paste GitHub URL (e.g. github.com/user/repo/...)">
+                <button class="btn btn-secondary" id="fetch-btn">Fetch from GitHub</button>
+                <span id="fetch-status" style="font-size:0.8rem; margin-top:5px; display:block; height:1rem;"></span>
+            </div>
+        </div>
+
+        <button class="btn" id="start-btn" style="max-width: 800px;">Initialize System</button>
+
+        <!-- Skipped Container -->
+        <div id="skipped-list" class="hidden"></div>
+    </div>
+
+    <script>
+        // --- 1. Code Database (by language) ---
+        const languageDatabase = {
+            python: [
+                `x = 10`,
+                `print("hello")`,
+                `name = input()`,
+                `for i in range(5):`,
+                `import numpy as np`,
+                `def add(a, b): return a + b`,
+                `def calculate_sum(a, b):`,
+                `    return a + b`,
+                `class Player:`,
+                `    def __init__(self, name):`,
+                `        self.name = name`,
+                `with open('file.txt') as f:`,
+                `    data = f.read()`,
+                `x = [i**2 for i in range(5)]`,
+                `result = list(map(lambda x: x*2, items))`,
+            ],
+            javascript: [
+                `let x = 10;`,
+                `var name = "Zi";`,
+                `x = x + 1;`,
+                `console.log("Hello Zi!");`,
+                `const add = (a, b) => a + b;`,
+                `let result = array.map(x => x * 2);`,
+                `if (user.isAdmin) { grantAccess(); }`,
+                `try { riskyOp(); } catch(e) { log(e); }`,
+                `const fetchData = async () => {`,
+                `    const res = await fetch(url);`,
+                `    return res.json();`,
+                `};`,
+                `document.getElementById('app').innerHTML = '';`,
+                `const [state, setState] = useState(null);`,
+            ],
+            css: [
+                `color: red;`,
+                `font-size: 16px;`,
+                `margin: 0;`,
+                `background-color: #0f0;`,
+                `border: 1px solid red;`,
+                `display: flex;`,
+                `display: flex; justify-content: center;`,
+                `.container { max-width: 1200px; }`,
+                `@media (max-width: 768px) {`,
+                `    font-size: 14px;`,
+                `transition: all 0.3s ease-in-out;`,
+                `grid-template-columns: repeat(3, 1fr);`,
+                `:root { --primary: #00ff9d; }`,
+                `box-shadow: 0 4px 12px rgba(0,0,0,0.3);`,
+            ],
+            html: [
+                `<br>`,
+                `<h1>Title</h1>`,
+                `<p>Hello</p>`,
+                `<!-- HTML Comment -->`,
+                `<div class="container"></div>`,
+                `<input type="text" placeholder="Enter...">`,
+                `<button onclick="handleClick()">Submit</button>`,
+                `<link rel="stylesheet" href="styles.css">`,
+                `<meta charset="UTF-8">`,
+                `<img src="logo.png" alt="Logo">`,
+                `<script src="app.js" defer><\/script>`,
+            ],
+            sql: [
+                `USE mydb;`,
+                `SHOW TABLES;`,
+                `SELECT * FROM users;`,
+                `SELECT * FROM users WHERE id=1;`,
+                `INSERT INTO orders VALUES (1, 99.99);`,
+                `UPDATE users SET active=1 WHERE id=42;`,
+                `DELETE FROM sessions WHERE expired=1;`,
+                `CREATE TABLE logs (id INT PRIMARY KEY);`,
+                `SELECT u.name FROM users u JOIN orders o ON u.id=o.uid;`,
+            ],
+            java: [
+                `int x = 10;`,
+                `String name;`,
+                `x = x + 1;`,
+                `public static void main(String[] args) {`,
+                `    System.out.println("Code Run");`,
+                `}`,
+                `import java.util.ArrayList;`,
+                `List<String> names = new ArrayList<>();`,
+                `for (String s : names) { System.out.println(s); }`,
+                `@Override public String toString() {`,
+                `    return "Object: " + this.id;`,
+                `interface Runnable { void run(); }`,
+            ],
+            cpp: [
+                `int x = 5;`,
+                `x++;`,
+                `return 0;`,
+                `const int MAX_SIZE = 100;`,
+                `vector<string> data;`,
+                `#include <iostream>`,
+                `std::cout << "Hello" << std::endl;`,
+                `for (int i = 0; i < n; i++) {`,
+                `    arr[i] = arr[i] * 2;`,
+                `void swap(int& a, int& b) {`,
+                `    int temp = a; a = b; b = temp;`,
+                `auto fn = [](int x) { return x * x; };`,
+            ],
+            bash: [
+                `pwd`,
+                `ls -la`,
+                `cd /home`,
+                `echo "Hello"`,
+                `echo "Start Deployment"`,
+                `git commit -m "fix: resolve conflict"`,
+                `chmod +x deploy.sh`,
+                `export NODE_ENV=production`,
+                `docker build -t myapp:latest .`,
+                `npm install && npm run build`,
+                `grep -r "TODO" ./src --include="*.js"`,
+            ],
+        };
+        const LANG_KEYS = Object.keys(languageDatabase);
+
+        // --- 2. State Variables ---
+        let gameLines = [];
+        let externalContentLoaded = false; // Flag to ignore random mode if file/url loaded
+        let currentLineIndex = 0;
+        let currentInput = "";
+        let isGameActive = false;
+        
+        // Stats
+        let startTime = null;
+        let totalMistakes = 0;
+        let skippedLines = [];
+        let stats = { letters: 0, numbers: 0, symbols: 0, totalChars: 0 };
+        let activeMistakes = {}; 
+        let totalRecoveryTime = 0;
+        let recoveryCount = 0;
+
+        // Settings
+        const settings = {
+            strict: true,
+            random: true
+        };
+
+        // Language selection
+        let selectedLanguages = new Set(LANG_KEYS);
+        let randomLanguageMode = false;
+
+        // --- Difficulty Config ---
+        const DIFFICULTIES = [
+            { id: 'baby',      label: 'BABY',      strict: false, maxLen: 30,  hideNext: false, hidePrev: false, shake: false, desc: 'Short lines · case-insensitive · full preview'    },
+            { id: 'easy',      label: 'EASY',      strict: false, maxLen: 999, hideNext: false, hidePrev: false, shake: false, desc: 'All lines · case-insensitive · full preview'      },
+            { id: 'medium',    label: 'MEDIUM',    strict: true,  maxLen: 999, hideNext: false, hidePrev: false, shake: false, desc: 'All lines · strict mode · full preview'           },
+            { id: 'hard',      label: 'HARD',      strict: true,  maxLen: 999, hideNext: true,  hidePrev: false, shake: false, desc: 'All lines · strict mode · next line hidden'       },
+            { id: 'nightmare', label: 'NIGHTMARE', strict: true,  maxLen: 999, hideNext: true,  hidePrev: true,  shake: true,  desc: 'All lines · strict · no previews · screen shake'  },
+        ];
+        let selectedDifficultyIdx = 2; // default: MEDIUM
+        let startLineNum = 1; // 1-based
+
+        function getLinePool() {
+            if (externalContentLoaded) return gameLines;
+            const diff = DIFFICULTIES[selectedDifficultyIdx];
+            const langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+            let pool = langs.flatMap(l => languageDatabase[l]);
+            if (diff.maxLen < 999) pool = pool.filter(l => l.trim().length <= diff.maxLen);
+            return pool;
+        }
+
+        function updateLineInfo() {
+            const total = getLinePool().length;
+            const el = document.getElementById('line-info');
+            if (el) el.textContent = total + ' line' + (total !== 1 ? 's' : '') + ' available';
+            const inp = document.getElementById('start-line');
+            if (inp) inp.max = total;
+        }
+
+        // --- 3. DOM Elements ---
+        const els = {
+            prev: document.getElementById('line-prev'),
+            curr: document.getElementById('line-current'),
+            next: document.getElementById('line-next'),
+            input: document.getElementById('hidden-input'),
+            ui: document.getElementById('ui-layer'),
+            startBtn: document.getElementById('start-btn'),
+            skipBtn: document.getElementById('skip-btn'),
+            skippedList: document.getElementById('skipped-list'),
+            
+            hud: { wpm: document.getElementById('hud-wpm'), mistakes: document.getElementById('hud-mistakes'), recovery: document.getElementById('hud-recovery') },
+            counters: { L: document.getElementById('count-letters'), N: document.getElementById('count-numbers'), S: document.getElementById('count-symbols'), Sk: document.getElementById('count-skipped') },
+
+            // Inputs
+            checkStrict: document.getElementById('check-strict'),
+            checkRandom: document.getElementById('check-random'),
+            fileUpload: document.getElementById('file-upload'),
+            fileName: document.getElementById('file-name'),
+            gitUrl: document.getElementById('github-url'),
+            fetchBtn: document.getElementById('fetch-btn'),
+            fetchStatus: document.getElementById('fetch-status'),
+            uiTitle: document.getElementById('ui-title')
+        };
+
+        // --- 4. Language Button Setup ---
+        (function buildLangButtons() {
+            const grid = document.getElementById('lang-grid');
+            LANG_KEYS.forEach(lang => {
+                const btn = document.createElement('button');
+                btn.className = 'lang-btn active';
+                btn.dataset.lang = lang;
+                btn.textContent = lang.toUpperCase();
+                btn.addEventListener('click', () => {
+                    if (selectedLanguages.has(lang)) {
+                        selectedLanguages.delete(lang);
+                        btn.classList.remove('active');
+                    } else {
+                        selectedLanguages.add(lang);
+                        btn.classList.add('active');
+                    }
+                });
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('check-random-lang').addEventListener('change', e => {
+            randomLanguageMode = e.target.checked;
+        });
+
+        document.getElementById('lang-all-btn').addEventListener('click', () => {
+                LANG_KEYS.forEach(l => selectedLanguages.add(l));
+                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.add('active'));
+            });
+            document.getElementById('lang-none-btn').addEventListener('click', () => {
+                selectedLanguages.clear();
+                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            });
+        })();
+
+        // --- 5. Event Listeners ---
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.diff);
+                selectedDifficultyIdx = idx;
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('diff-desc').textContent = DIFFICULTIES[idx].desc;
+                settings.strict = DIFFICULTIES[idx].strict;
+                els.checkStrict.checked = settings.strict;
+            });
+        });
+
+        document.getElementById('start-line').addEventListener('input', e => {
+            startLineNum = Math.max(1, parseInt(e.target.value) || 1);
+        });
+
+        document.getElementById('random-line-btn').addEventListener('click', () => {
+            const total = getLinePool().length;
+            if (total === 0) return;
+            const rand = Math.floor(Math.random() * total) + 1;
+            startLineNum = rand;
+            document.getElementById('start-line').value = rand;
+        });
+
+        // Update line count whenever language or difficulty changes
+        document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', updateLineInfo));
+        document.getElementById('lang-all-btn').addEventListener('click', updateLineInfo);
+        document.getElementById('lang-none-btn').addEventListener('click', updateLineInfo);
+        document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', updateLineInfo));
+        updateLineInfo(); // init on load
+
+        els.checkStrict.addEventListener('change', e => settings.strict = e.target.checked);
+        els.checkRandom.addEventListener('change', e => settings.random = e.target.checked);
+        els.startBtn.addEventListener('click', startGame);
+        els.skipBtn.addEventListener('click', skipLine);
+        
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'Tab' && isGameActive) { e.preventDefault(); skipLine(); }
+        });
+
+        els.input.addEventListener('input', (e) => {
+            if (!isGameActive) return;
+            if (!startTime) startTime = Date.now();
+            const target = gameLines[currentLineIndex];
+            const val = e.target.value;
+            currentInput = val.length > target.length ? val.substring(0, target.length) : val;
+            els.input.value = currentInput;
+            renderLine();
+            calculateRealTimeStats();
+        });
+
+        // --- File Import Logic ---
+        els.fileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                gameLines = text.split(/\r?\n/).filter(line => line.length > 0);
+                externalContentLoaded = true;
+                els.fileName.textContent = file.name + " (Loaded)";
+                els.fileName.style.color = "var(--neon-green)";
+            };
+            reader.readAsText(file);
+        });
+
+        // --- GitHub Fetch Logic ---
+        els.fetchBtn.addEventListener('click', async () => {
+            const url = els.gitUrl.value.trim();
+            els.fetchStatus.textContent = "Fetching...";
+            els.fetchStatus.style.color = "var(--text-dim)";
+
+            if (!url.includes('github.com')) {
+                els.fetchStatus.textContent = "Error: Not a GitHub URL";
+                els.fetchStatus.style.color = "var(--neon-pink)";
+                return;
+            }
+
+            // Convert to Raw URL
+            let rawUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+            
+            // Use CORS Proxy (AllOrigins)
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`;
+
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Network error");
+                
+                const text = await response.text();
+                gameLines = text.split(/\r?\n/).filter(line => line.length > 0);
+                externalContentLoaded = true;
+                
+                els.fetchStatus.textContent = `Loaded ${gameLines.length} lines!`;
+                els.fetchStatus.style.color = "var(--neon-green)";
+                
+            } catch (err) {
+                els.fetchStatus.textContent = "Failed to fetch. Check URL.";
+                els.fetchStatus.style.color = "var(--neon-pink)";
+                console.error(err);
+            }
+        });
+
+        // --- 5. Core Game Logic ---
+
+        function startGame() {
+            // Determine Source
+            if (!externalContentLoaded) {
+                const diff = DIFFICULTIES[selectedDifficultyIdx];
+                let langs;
+                if (randomLanguageMode) {
+                    const pool = LANG_KEYS;
+                    langs = [pool[Math.floor(Math.random() * pool.length)]];
+                } else {
+                    langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+                }
+                gameLines = langs.flatMap(l => languageDatabase[l]);
+                if (diff.maxLen < 999) {
+                    gameLines = gameLines.filter(l => l.trim().length <= diff.maxLen);
+                }
+                if (settings.random) {
+                    gameLines.sort(() => Math.random() - 0.5);
+                }
+            }
+
+            // Apply start line offset
+            const startIdx = Math.min(startLineNum - 1, gameLines.length - 1);
+            if (startIdx > 0) gameLines = gameLines.slice(startIdx);
+
+            if (gameLines.length === 0) {
+                alert("No code loaded! Select a language or import a file.");
+                return;
+            }
+
+            // Reset State
+            currentLineIndex = 0;
+            currentInput = "";
+            isGameActive = true;
+            startTime = null;
+            totalMistakes = 0;
+            skippedLines = [];
+            stats = { letters: 0, numbers: 0, symbols: 0, totalChars: 0 };
+            activeMistakes = {};
+            totalRecoveryTime = 0;
+            recoveryCount = 0;
+
+            // UI Reset
+            els.skippedList.innerHTML = "";
+            els.skippedList.classList.add('hidden');
+            els.ui.classList.add('hidden');
+            els.input.value = "";
+            els.input.focus();
+
+            updateStatsUI();
+            renderLine();
+        }
+
+        function skipLine() {
+            if (!isGameActive) return;
+            skippedLines.push(gameLines[currentLineIndex]);
+            currentLineIndex++;
+            currentInput = "";
+            els.input.value = "";
+            activeMistakes = {};
+            if (currentLineIndex >= gameLines.length) endGame();
+            else { renderLine(); updateStatsUI(); }
+        }
+
+        function endGame() {
+            isGameActive = false;
+            els.uiTitle.textContent = "SESSION COMPLETE";
+            
+            if (skippedLines.length > 0) {
+                els.skippedList.classList.remove('hidden');
+                els.skippedList.innerHTML = `<div style="color:white; font-weight:bold; margin-bottom:5px;">REVIEW SKIPPED:</div>`;
+                skippedLines.forEach(line => els.skippedList.innerHTML += `<div>${escapeHtml(line)}</div>`);
+            } else {
+                els.skippedList.classList.add('hidden');
+            }
+            els.ui.classList.remove('hidden');
+        }
+
+        function renderLine() {
+            const target = gameLines[currentLineIndex];
+            let html = '';
+            for (let i = 0; i < target.length; i++) {
+                const tChar = target[i];
+                const iChar = currentInput[i];
+                let isCorrect = false;
+                
+                if (i < currentInput.length) {
+                    isCorrect = settings.strict ? (iChar === tChar) : (iChar.toLowerCase() === tChar.toLowerCase());
+
+                    if (!isCorrect && !activeMistakes[i]) {
+                        activeMistakes[i] = Date.now();
+                        totalMistakes++;
+                        updateHud();
+                        if (DIFFICULTIES[selectedDifficultyIdx].shake) {
+                            const gc = document.getElementById('game-container');
+                            gc.classList.remove('nightmare-shake');
+                            void gc.offsetWidth; // reflow to restart animation
+                            gc.classList.add('nightmare-shake');
+                        }
+                    } else if (isCorrect && activeMistakes[i]) {
+                        totalRecoveryTime += (Date.now() - activeMistakes[i]);
+                        recoveryCount++;
+                        delete activeMistakes[i];
+                        updateHud();
+                    }
+                }
+
+                if (i < currentInput.length) {
+                    html += `<span class="char ${isCorrect ? 'correct' : 'wrong'}">${escapeHtml(tChar)}</span>`;
+                } else if (i === currentInput.length) {
+                    html += `<span class="char pending">${escapeHtml(tChar)}</span><span class="cursor"></span>`;
+                } else {
+                    html += `<span class="char pending">${escapeHtml(tChar)}</span>`;
+                }
+            }
+            if (currentInput.length === target.length) html += `<span class="cursor"></span>`;
+            els.curr.innerHTML = html;
+
+            const diff = DIFFICULTIES[selectedDifficultyIdx];
+            els.prev.textContent = (currentLineIndex > 0 && !diff.hidePrev) ? gameLines[currentLineIndex-1] : "";
+            els.prev.style.visibility = (currentLineIndex > 0 && !diff.hidePrev) ? "visible" : "hidden";
+            els.next.textContent = (currentLineIndex < gameLines.length-1 && !diff.hideNext) ? gameLines[currentLineIndex+1] : "";
+            els.next.style.visibility = (currentLineIndex < gameLines.length-1 && !diff.hideNext) ? "visible" : "hidden";
+
+            // Completion Check
+            let lineComplete = (currentInput.length === target.length);
+            if (lineComplete) {
+                for(let k=0; k<target.length; k++) {
+                     if(settings.strict) {
+                         if(currentInput[k] !== target[k]) lineComplete = false;
+                     } else {
+                         if(currentInput[k].toLowerCase() !== target[k].toLowerCase()) lineComplete = false;
+                     }
+                }
+            }
+
+            if (lineComplete) {
+                processLineStats(target);
+                setTimeout(() => {
+                    currentLineIndex++; currentInput = ""; els.input.value = ""; activeMistakes = {};
+                    if (currentLineIndex >= gameLines.length) endGame();
+                    else renderLine();
+                }, 150);
+            }
+        }
+
+        function processLineStats(text) {
+            stats.letters += (text.match(/[a-z]/gi) || []).length;
+            stats.numbers += (text.match(/[0-9]/g) || []).length;
+            stats.symbols += (text.match(/[^\w\s]|_/g) || []).length;
+            stats.totalChars += text.length;
+            updateStatsUI();
+        }
+
+        function calculateRealTimeStats() {
+            if (!startTime || stats.totalChars === 0) return;
+            const timeMin = (Date.now() - startTime) / 60000;
+            const wpm = Math.round((stats.totalChars / 5) / timeMin);
+            els.hud.wpm.textContent = isFinite(wpm) ? wpm : 0;
+        }
+
+        function updateHud() {
+            els.hud.mistakes.textContent = totalMistakes;
+            els.hud.recovery.textContent = recoveryCount > 0 ? Math.round(totalRecoveryTime / recoveryCount) + "ms" : "0ms";
+        }
+
+        function updateStatsUI() {
+            els.counters.L.textContent = stats.letters;
+            els.counters.N.textContent = stats.numbers;
+            els.counters.S.textContent = stats.symbols;
+            els.counters.Sk.textContent = skippedLines.length;
+            updateHud();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
