@@ -404,6 +404,10 @@
                     <button class="btn-tiny" id="lang-all-btn">Select All</button>
                     <button class="btn-tiny" id="lang-none-btn">Clear</button>
                 </div>
+                <div class="setting-row" style="margin-top:10px;">
+                    <span>Random Language Mode <span style="color:var(--text-dim);font-size:0.75rem;">(picks one language at random each game)</span></span>
+                    <input type="checkbox" id="check-random-lang">
+                </div>
             </div>
 
             <!-- Difficulty -->
@@ -609,6 +613,7 @@
 
         // Language selection
         let selectedLanguages = new Set(LANG_KEYS);
+        let randomLanguageMode = false;
 
         // --- Difficulty Config ---
         const DIFFICULTIES = [
@@ -683,7 +688,11 @@
                 grid.appendChild(btn);
             });
 
-            document.getElementById('lang-all-btn').addEventListener('click', () => {
+            document.getElementById('check-random-lang').addEventListener('change', e => {
+            randomLanguageMode = e.target.checked;
+        });
+
+        document.getElementById('lang-all-btn').addEventListener('click', () => {
                 LANG_KEYS.forEach(l => selectedLanguages.add(l));
                 grid.querySelectorAll('.lang-btn').forEach(b => b.classList.add('active'));
             });
@@ -802,7 +811,13 @@
             // Determine Source
             if (!externalContentLoaded) {
                 const diff = DIFFICULTIES[selectedDifficultyIdx];
-                const langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+                let langs;
+                if (randomLanguageMode) {
+                    const pool = LANG_KEYS;
+                    langs = [pool[Math.floor(Math.random() * pool.length)]];
+                } else {
+                    langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+                }
                 gameLines = langs.flatMap(l => languageDatabase[l]);
                 if (diff.maxLen < 999) {
                     gameLines = gameLines.filter(l => l.trim().length <= diff.maxLen);
