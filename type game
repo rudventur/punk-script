@@ -262,6 +262,39 @@
             margin-bottom: 20px; font-size: 0.9rem; color: #ffadad;
         }
 
+        /* --- Language Buttons --- */
+        .lang-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        .lang-btn {
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 5px 14px;
+            font-family: var(--font-stack);
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .lang-btn.active {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0,240,255,0.08);
+        }
+        .lang-btn:hover:not(.active) { border-color: #666; color: var(--text-main); }
+        .lang-actions { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-tiny {
+            background: transparent;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 3px 10px;
+            font-family: var(--font-stack);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .btn-tiny:hover { border-color: var(--neon-yellow); color: var(--neon-yellow); }
+
         @keyframes blink { 50% { opacity: 0; } }
         
         @media(max-width: 768px) {
@@ -317,6 +350,16 @@
         <h1 id="ui-title">SYSTEM READY</h1>
         
         <div class="menu-grid">
+            <!-- Language Selector -->
+            <div class="menu-card" style="grid-column: span 2;">
+                <div class="card-title">Language</div>
+                <div id="lang-grid" class="lang-grid"></div>
+                <div class="lang-actions">
+                    <button class="btn-tiny" id="lang-all-btn">Select All</button>
+                    <button class="btn-tiny" id="lang-none-btn">Clear</button>
+                </div>
+            </div>
+
             <!-- Left Column: Settings -->
             <div class="menu-card">
                 <div class="card-title">Settings</div>
@@ -354,30 +397,124 @@
     </div>
 
     <script>
-        // --- 1. Code Database ---
-        const codeDatabase = [
-            `const int MAX_SIZE = 100;`,
-            `import numpy as np`,
-            `def calculate_sum(a, b):`,
-            `    return a + b`,
-            `<!-- HTML Comment -->`,
-            `<div class="container"></div>`,
-            `SELECT * FROM users WHERE id=1;`,
-            `console.log("Hello Zi!");`,
-            `background-color: #0f0;`,
-            `border: 1px solid red;`,
-            `let result = array.map(x => x * 2);`,
-            `if (user.isAdmin) { grantAccess(); }`,
-            `try { riskyOperation(); } catch(e) { log(e); }`,
-            `.gitignore`,
-            `npm install express`,
-            `public static void main(String[] args) {`,
-            `    System.out.println("Code Run");`,
-            `}`,
-            `vector<string> data;`,
-            `echo "Start Deployment"`,
-            `display: flex; justify-content: center;`
-        ];
+        // --- 1. Code Database (by language) ---
+        const languageDatabase = {
+            python: [
+                `x = 10`,
+                `print("hello")`,
+                `name = input()`,
+                `for i in range(5):`,
+                `import numpy as np`,
+                `def add(a, b): return a + b`,
+                `def calculate_sum(a, b):`,
+                `    return a + b`,
+                `class Player:`,
+                `    def __init__(self, name):`,
+                `        self.name = name`,
+                `with open('file.txt') as f:`,
+                `    data = f.read()`,
+                `x = [i**2 for i in range(5)]`,
+                `result = list(map(lambda x: x*2, items))`,
+            ],
+            javascript: [
+                `let x = 10;`,
+                `var name = "Zi";`,
+                `x = x + 1;`,
+                `console.log("Hello Zi!");`,
+                `const add = (a, b) => a + b;`,
+                `let result = array.map(x => x * 2);`,
+                `if (user.isAdmin) { grantAccess(); }`,
+                `try { riskyOp(); } catch(e) { log(e); }`,
+                `const fetchData = async () => {`,
+                `    const res = await fetch(url);`,
+                `    return res.json();`,
+                `};`,
+                `document.getElementById('app').innerHTML = '';`,
+                `const [state, setState] = useState(null);`,
+            ],
+            css: [
+                `color: red;`,
+                `font-size: 16px;`,
+                `margin: 0;`,
+                `background-color: #0f0;`,
+                `border: 1px solid red;`,
+                `display: flex;`,
+                `display: flex; justify-content: center;`,
+                `.container { max-width: 1200px; }`,
+                `@media (max-width: 768px) {`,
+                `    font-size: 14px;`,
+                `transition: all 0.3s ease-in-out;`,
+                `grid-template-columns: repeat(3, 1fr);`,
+                `:root { --primary: #00ff9d; }`,
+                `box-shadow: 0 4px 12px rgba(0,0,0,0.3);`,
+            ],
+            html: [
+                `<br>`,
+                `<h1>Title</h1>`,
+                `<p>Hello</p>`,
+                `<!-- HTML Comment -->`,
+                `<div class="container"></div>`,
+                `<input type="text" placeholder="Enter...">`,
+                `<button onclick="handleClick()">Submit</button>`,
+                `<link rel="stylesheet" href="styles.css">`,
+                `<meta charset="UTF-8">`,
+                `<img src="logo.png" alt="Logo">`,
+                `<script src="app.js" defer><\/script>`,
+            ],
+            sql: [
+                `USE mydb;`,
+                `SHOW TABLES;`,
+                `SELECT * FROM users;`,
+                `SELECT * FROM users WHERE id=1;`,
+                `INSERT INTO orders VALUES (1, 99.99);`,
+                `UPDATE users SET active=1 WHERE id=42;`,
+                `DELETE FROM sessions WHERE expired=1;`,
+                `CREATE TABLE logs (id INT PRIMARY KEY);`,
+                `SELECT u.name FROM users u JOIN orders o ON u.id=o.uid;`,
+            ],
+            java: [
+                `int x = 10;`,
+                `String name;`,
+                `x = x + 1;`,
+                `public static void main(String[] args) {`,
+                `    System.out.println("Code Run");`,
+                `}`,
+                `import java.util.ArrayList;`,
+                `List<String> names = new ArrayList<>();`,
+                `for (String s : names) { System.out.println(s); }`,
+                `@Override public String toString() {`,
+                `    return "Object: " + this.id;`,
+                `interface Runnable { void run(); }`,
+            ],
+            cpp: [
+                `int x = 5;`,
+                `x++;`,
+                `return 0;`,
+                `const int MAX_SIZE = 100;`,
+                `vector<string> data;`,
+                `#include <iostream>`,
+                `std::cout << "Hello" << std::endl;`,
+                `for (int i = 0; i < n; i++) {`,
+                `    arr[i] = arr[i] * 2;`,
+                `void swap(int& a, int& b) {`,
+                `    int temp = a; a = b; b = temp;`,
+                `auto fn = [](int x) { return x * x; };`,
+            ],
+            bash: [
+                `pwd`,
+                `ls -la`,
+                `cd /home`,
+                `echo "Hello"`,
+                `echo "Start Deployment"`,
+                `git commit -m "fix: resolve conflict"`,
+                `chmod +x deploy.sh`,
+                `export NODE_ENV=production`,
+                `docker build -t myapp:latest .`,
+                `npm install && npm run build`,
+                `grep -r "TODO" ./src --include="*.js"`,
+            ],
+        };
+        const LANG_KEYS = Object.keys(languageDatabase);
 
         // --- 2. State Variables ---
         let gameLines = [];
@@ -400,6 +537,9 @@
             strict: true,
             random: true
         };
+
+        // Language selection
+        let selectedLanguages = new Set(LANG_KEYS);
 
         // --- 3. DOM Elements ---
         const els = {
@@ -426,7 +566,37 @@
             uiTitle: document.getElementById('ui-title')
         };
 
-        // --- 4. Event Listeners ---
+        // --- 4. Language Button Setup ---
+        (function buildLangButtons() {
+            const grid = document.getElementById('lang-grid');
+            LANG_KEYS.forEach(lang => {
+                const btn = document.createElement('button');
+                btn.className = 'lang-btn active';
+                btn.dataset.lang = lang;
+                btn.textContent = lang.toUpperCase();
+                btn.addEventListener('click', () => {
+                    if (selectedLanguages.has(lang)) {
+                        selectedLanguages.delete(lang);
+                        btn.classList.remove('active');
+                    } else {
+                        selectedLanguages.add(lang);
+                        btn.classList.add('active');
+                    }
+                });
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('lang-all-btn').addEventListener('click', () => {
+                LANG_KEYS.forEach(l => selectedLanguages.add(l));
+                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.add('active'));
+            });
+            document.getElementById('lang-none-btn').addEventListener('click', () => {
+                selectedLanguages.clear();
+                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            });
+        })();
+
+        // --- 5. Event Listeners ---
         els.checkStrict.addEventListener('change', e => settings.strict = e.target.checked);
         els.checkRandom.addEventListener('change', e => settings.random = e.target.checked);
         els.startBtn.addEventListener('click', startGame);
@@ -503,14 +673,15 @@
         function startGame() {
             // Determine Source
             if (!externalContentLoaded) {
-                gameLines = [...codeDatabase];
+                const langs = selectedLanguages.size > 0 ? [...selectedLanguages] : LANG_KEYS;
+                gameLines = langs.flatMap(l => languageDatabase[l]);
                 if (settings.random) {
                     gameLines.sort(() => Math.random() - 0.5);
                 }
             }
 
             if (gameLines.length === 0) {
-                alert("No code loaded! Import a file or URL first.");
+                alert("No code loaded! Select a language or import a file.");
                 return;
             }
 
