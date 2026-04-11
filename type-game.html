@@ -147,6 +147,25 @@
         }
         #skip-btn:hover { background: var(--neon-pink); color: #fff; opacity: 1; box-shadow: 0 0 10px var(--neon-pink); }
 
+        #finish-btn {
+            position: absolute;
+            right: 0;
+            top: calc(50% + 36px);
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 5px 15px;
+            font-family: var(--font-stack);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+            transition: 0.2s;
+            z-index: 20;
+        }
+        #finish-btn:hover { background: var(--neon-green); color: #000; opacity: 1; box-shadow: 0 0 10px var(--neon-green); }
+
         /* --- Bottom Stats --- */
         #stats-panel {
             width: 90%;
@@ -377,6 +396,7 @@
             <div id="line-prev" class="code-line line-prev"></div>
             <div id="line-current" class="code-line line-current"></div>
             <button id="skip-btn" title="Press Tab">Skip</button>
+            <button id="finish-btn" title="End session and see stats">Finish</button>
             <div id="line-next" class="code-line line-next"></div>
         </div>
     </div>
@@ -738,9 +758,14 @@
         els.checkRandom.addEventListener('change', e => settings.random = e.target.checked);
         els.startBtn.addEventListener('click', startGame);
         els.skipBtn.addEventListener('click', skipLine);
+        document.getElementById('finish-btn').addEventListener('click', () => { if (isGameActive) endGame(); });
         
         document.addEventListener('keydown', (e) => {
             if(e.key === 'Tab' && isGameActive) { e.preventDefault(); skipLine(); }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (isGameActive && !els.ui.contains(e.target)) els.input.focus();
         });
 
         els.input.addEventListener('input', (e) => {
