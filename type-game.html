@@ -121,10 +121,19 @@
 
         .cursor {
             display: inline-block;
-            width: 10px; height: 1.5rem;
-            background: var(--neon-yellow);
             vertical-align: middle;
+            background: var(--neon-yellow);
+        }
+        .cursor.cursor-block {
+            width: 10px; height: 1.5rem;
             animation: blink 1s step-end infinite;
+        }
+        .cursor.cursor-line-blink {
+            width: 2px; height: 1.5rem;
+            animation: blink 1s step-end infinite;
+        }
+        .cursor.cursor-line-static {
+            width: 2px; height: 1.5rem;
         }
 
         #skip-btn {
@@ -262,25 +271,44 @@
             margin-bottom: 20px; font-size: 0.9rem; color: #ffadad;
         }
 
-        /* --- Language Buttons --- */
-        .lang-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
-        .lang-btn {
+        /* --- Language Tickboxes --- */
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 5px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .lang-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
             background: #0b0c15;
             border: 1px solid #444;
+            border-radius: 4px;
             color: var(--text-dim);
-            padding: 5px 14px;
+            padding: 6px 10px;
             font-family: var(--font-stack);
             font-size: 0.75rem;
             cursor: pointer;
             text-transform: uppercase;
             transition: 0.2s;
         }
-        .lang-btn.active {
+        .lang-chip input[type="checkbox"] {
+            accent-color: var(--neon-blue);
+            width: 14px; height: 14px;
+            margin: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .lang-chip.active {
             border-color: var(--neon-blue);
             color: var(--neon-blue);
             background: rgba(0,240,255,0.08);
         }
-        .lang-btn:hover:not(.active) { border-color: #666; color: var(--text-main); }
+        .lang-chip:hover:not(.active) { border-color: #666; color: var(--text-main); }
         .lang-actions { display: flex; gap: 8px; margin-top: 8px; }
         .btn-tiny {
             background: transparent;
@@ -331,6 +359,28 @@
         .diff-btn[data-diff="3"].active { background: var(--neon-orange); border-color: var(--neon-orange); }
         .diff-btn[data-diff="4"].active { background: var(--neon-pink);   border-color: var(--neon-pink);   }
         #diff-desc { font-size: 0.75rem; color: var(--text-dim); text-align: center; min-height: 1.2rem; }
+
+        /* --- Cursor Style Buttons --- */
+        .cursor-row { display: flex; gap: 8px; margin: 8px 0; }
+        .cursor-btn {
+            flex: 1;
+            background: #0b0c15;
+            border: 1px solid #444;
+            color: var(--text-dim);
+            padding: 8px 4px;
+            font-family: var(--font-stack);
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .cursor-btn.active {
+            background: var(--neon-blue);
+            border-color: var(--neon-blue);
+            color: #000;
+            font-weight: bold;
+        }
+        .cursor-btn:hover:not(.active) { border-color: #666; color: var(--text-main); }
 
         @keyframes shake {
             0%,100% { transform: translateX(0); }
@@ -423,9 +473,9 @@
                 <div id="diff-desc">All lines · strict mode · full preview</div>
             </div>
 
-            <!-- Left Column: Settings -->
+            <!-- Left Column: Game Options -->
             <div class="menu-card">
-                <div class="card-title">Settings</div>
+                <div class="card-title">Game Options</div>
                 <div class="setting-row">
                     <span>Strict Mode (Case Sensitive)</span>
                     <input type="checkbox" id="check-strict" checked>
@@ -433,6 +483,14 @@
                 <div class="setting-row">
                     <span>Randomize Built-in Code</span>
                     <input type="checkbox" id="check-random" checked>
+                </div>
+                <div class="setting-row" style="margin-top:10px; margin-bottom:0;">
+                    <span>Cursor Style</span>
+                </div>
+                <div class="cursor-row">
+                    <button class="cursor-btn active" data-cursor="block" title="Blinking block over the current letter">BLOCK</button>
+                    <button class="cursor-btn" data-cursor="line-blink" title="Blinking line, positioned after what you typed">LINE BLINK</button>
+                    <button class="cursor-btn" data-cursor="line-static" title="Steady line, no blinking">LINE SOLID</button>
                 </div>
             </div>
 
@@ -586,6 +644,306 @@
                 `npm install && npm run build`,
                 `grep -r "TODO" ./src --include="*.js"`,
             ],
+            typescript: [
+                `let x: number = 10;`,
+                `const name: string = "Zi";`,
+                `interface User { id: number; name: string; }`,
+                `type ID = string | number;`,
+                `function add(a: number, b: number): number {`,
+                `    return a + b;`,
+                `}`,
+                `class Player { constructor(public name: string) {} }`,
+                `const users: User[] = [];`,
+                `enum Status { Active, Inactive }`,
+                `async function fetchData(): Promise<void> {`,
+                `    const res = await fetch(url);`,
+                `}`,
+            ],
+            go: [
+                `package main`,
+                `import "fmt"`,
+                `func main() {`,
+                `    fmt.Println("Hello, Zi")`,
+                `}`,
+                `var x int = 10`,
+                `x = x + 1`,
+                `type Player struct {`,
+                `    Name string`,
+                `}`,
+                `func add(a int, b int) int {`,
+                `    return a + b`,
+                `}`,
+                `go func() { fmt.Println("async") }()`,
+            ],
+            rust: [
+                `fn main() {`,
+                `    println!("Hello, Zi!");`,
+                `}`,
+                `let x: i32 = 10;`,
+                `let mut y = 5;`,
+                `y += 1;`,
+                `struct Player {`,
+                `    name: String,`,
+                `}`,
+                `fn add(a: i32, b: i32) -> i32 {`,
+                `    a + b`,
+                `}`,
+                `let v: Vec<i32> = vec![1, 2, 3];`,
+                `match x {`,
+                `    0 => println!("zero"),`,
+                `    _ => println!("other"),`,
+                `}`,
+            ],
+            c: [
+                `#include <stdio.h>`,
+                `int main() {`,
+                `    printf("Hello, Zi!\\n");`,
+                `    return 0;`,
+                `}`,
+                `int x = 10;`,
+                `x = x + 1;`,
+                `struct Player {`,
+                `    char name[20];`,
+                `};`,
+                `void swap(int *a, int *b) {`,
+                `    int temp = *a; *a = *b; *b = temp;`,
+                `}`,
+                `for (int i = 0; i < 5; i++) {`,
+                `    printf("%d\\n", i);`,
+                `}`,
+            ],
+            csharp: [
+                `using System;`,
+                `class Program {`,
+                `    static void Main() {`,
+                `        Console.WriteLine("Hello, Zi!");`,
+                `    }`,
+                `}`,
+                `int x = 10;`,
+                `x = x + 1;`,
+                `public class Player {`,
+                `    public string Name { get; set; }`,
+                `}`,
+                `var list = new List<int>();`,
+                `foreach (var item in list) {`,
+                `    Console.WriteLine(item);`,
+                `}`,
+                `public static int Add(int a, int b) => a + b;`,
+            ],
+            ruby: [
+                `x = 10`,
+                `puts "Hello, Zi!"`,
+                `name = "Zi"`,
+                `def add(a, b)`,
+                `  a + b`,
+                `end`,
+                `class Player`,
+                `  def initialize(name)`,
+                `    @name = name`,
+                `  end`,
+                `end`,
+                `[1, 2, 3].each do |n|`,
+                `  puts n`,
+                `end`,
+                `result = (1..5).map { |n| n * 2 }`,
+            ],
+            php: [
+                `<?php`,
+                `$x = 10;`,
+                `echo "Hello, Zi!";`,
+                `function add($a, $b) {`,
+                `    return $a + $b;`,
+                `}`,
+                `class Player {`,
+                `    public $name;`,
+                `    function __construct($name) {`,
+                `        $this->name = $name;`,
+                `    }`,
+                `}`,
+                `foreach ($items as $item) {`,
+                `    echo $item;`,
+                `}`,
+                `$arr = array_map(fn($x) => $x * 2, $items);`,
+            ],
+            swift: [
+                `import Foundation`,
+                `var x = 10`,
+                `let name = "Zi"`,
+                `print("Hello, Zi!")`,
+                `func add(a: Int, b: Int) -> Int {`,
+                `    return a + b`,
+                `}`,
+                `struct Player {`,
+                `    var name: String`,
+                `}`,
+                `for i in 0..<5 {`,
+                `    print(i)`,
+                `}`,
+                `let doubled = numbers.map { $0 * 2 }`,
+            ],
+            kotlin: [
+                `fun main() {`,
+                `    println("Hello, Zi!")`,
+                `}`,
+                `var x: Int = 10`,
+                `val name = "Zi"`,
+                `fun add(a: Int, b: Int): Int = a + b`,
+                `data class Player(val name: String)`,
+                `for (i in 0..4) {`,
+                `    println(i)`,
+                `}`,
+                `val doubled = numbers.map { it * 2 }`,
+            ],
+            perl: [
+                `my $x = 10;`,
+                `print "Hello, Zi!\\n";`,
+                `my $name = "Zi";`,
+                `sub add {`,
+                `    my ($a, $b) = @_;`,
+                `    return $a + $b;`,
+                `}`,
+                `my @arr = (1, 2, 3);`,
+                `foreach my $item (@arr) {`,
+                `    print "$item\\n";`,
+                `}`,
+                `my %hash = (name => "Zi");`,
+            ],
+            r: [
+                `x <- 10`,
+                `print("Hello, Zi!")`,
+                `name <- "Zi"`,
+                `add <- function(a, b) {`,
+                `  return(a + b)`,
+                `}`,
+                `df <- data.frame(x = 1:5)`,
+                `for (i in 1:5) {`,
+                `  print(i)`,
+                `}`,
+                `result <- sapply(1:5, function(x) x * 2)`,
+            ],
+            scala: [
+                `object Main extends App {`,
+                `  println("Hello, Zi!")`,
+                `}`,
+                `val x: Int = 10`,
+                `var name = "Zi"`,
+                `def add(a: Int, b: Int): Int = a + b`,
+                `case class Player(name: String)`,
+                `val list = List(1, 2, 3)`,
+                `list.foreach(println)`,
+                `val doubled = list.map(_ * 2)`,
+            ],
+            haskell: [
+                `main :: IO ()`,
+                `main = putStrLn "Hello, Zi!"`,
+                `x :: Int`,
+                `x = 10`,
+                `add :: Int -> Int -> Int`,
+                `add a b = a + b`,
+                `data Player = Player { name :: String }`,
+                `doubled = map (*2) [1, 2, 3]`,
+                `factorial n = if n == 0 then 1 else n * factorial (n - 1)`,
+            ],
+            dart: [
+                `void main() {`,
+                `  print('Hello, Zi!');`,
+                `}`,
+                `int x = 10;`,
+                `var name = 'Zi';`,
+                `int add(int a, int b) {`,
+                `  return a + b;`,
+                `}`,
+                `class Player {`,
+                `  String name;`,
+                `  Player(this.name);`,
+                `}`,
+                `for (var i = 0; i < 5; i++) {`,
+                `  print(i);`,
+                `}`,
+                `var doubled = numbers.map((n) => n * 2).toList();`,
+            ],
+            elixir: [
+                `IO.puts("Hello, Zi!")`,
+                `x = 10`,
+                `name = "Zi"`,
+                `defmodule Player do`,
+                `  defstruct name: nil`,
+                `end`,
+                `add = fn a, b -> a + b end`,
+                `Enum.each([1, 2, 3], fn n -> IO.puts(n) end)`,
+                `doubled = Enum.map([1, 2, 3], fn n -> n * 2 end)`,
+            ],
+            lua: [
+                `local x = 10`,
+                `print("Hello, Zi!")`,
+                `local name = "Zi"`,
+                `function add(a, b)`,
+                `  return a + b`,
+                `end`,
+                `local player = { name = "Zi" }`,
+                `for i = 1, 5 do`,
+                `  print(i)`,
+                `end`,
+                `local doubled = {}`,
+                `for i, v in ipairs(nums) do`,
+                `  doubled[i] = v * 2`,
+                `end`,
+            ],
+            powershell: [
+                `$x = 10`,
+                `Write-Host "Hello, Zi!"`,
+                `$name = "Zi"`,
+                `function Add($a, $b) {`,
+                `    return $a + $b`,
+                `}`,
+                `foreach ($item in $items) {`,
+                `    Write-Host $item`,
+                `}`,
+                `$doubled = $numbers | ForEach-Object { $_ * 2 }`,
+                `Get-Process | Where-Object { $_.CPU -gt 10 }`,
+            ],
+            yaml: [
+                `name: Zi`,
+                `version: 1.0.0`,
+                `settings:`,
+                `  strict: true`,
+                `  difficulty: medium`,
+                `languages:`,
+                `  - python`,
+                `  - javascript`,
+                `  - rust`,
+                `env:`,
+                `  NODE_ENV: production`,
+                `steps:`,
+                `  - run: npm install`,
+                `  - run: npm test`,
+            ],
+            json: [
+                `{`,
+                `  "name": "Zi",`,
+                `  "version": "1.0.0",`,
+                `  "strict": true,`,
+                `  "languages": ["python", "javascript"],`,
+                `  "settings": {`,
+                `    "difficulty": "medium"`,
+                `  },`,
+                `  "active": true,`,
+                `  "count": 42`,
+                `}`,
+            ],
+            markdown: [
+                `# Zi's Retro Typer`,
+                `## Features`,
+                `- Multiple languages`,
+                `- Difficulty levels`,
+                `**Bold text** and _italic text_`,
+                `> A blockquote example`,
+                `[Link](https://example.com)`,
+                '`code block`',
+                `- [ ] Todo item`,
+                `1. First item`,
+                `2. Second item`,
+            ],
         };
         const LANG_KEYS = Object.keys(languageDatabase);
 
@@ -614,6 +972,9 @@
         // Language selection
         let selectedLanguages = new Set(LANG_KEYS);
         let randomLanguageMode = false;
+
+        // Cursor style: 'block' | 'line-blink' | 'line-static'
+        let cursorMode = 'block';
 
         // --- Difficulty Config ---
         const DIFFICULTIES = [
@@ -668,39 +1029,67 @@
             uiTitle: document.getElementById('ui-title')
         };
 
-        // --- 4. Language Button Setup ---
+        // --- 4. Language Tickbox Setup ---
         (function buildLangButtons() {
             const grid = document.getElementById('lang-grid');
             LANG_KEYS.forEach(lang => {
-                const btn = document.createElement('button');
-                btn.className = 'lang-btn active';
-                btn.dataset.lang = lang;
-                btn.textContent = lang.toUpperCase();
-                btn.addEventListener('click', () => {
-                    if (selectedLanguages.has(lang)) {
-                        selectedLanguages.delete(lang);
-                        btn.classList.remove('active');
-                    } else {
+                const chip = document.createElement('label');
+                chip.className = 'lang-chip active';
+                chip.dataset.lang = lang;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+
+                const text = document.createElement('span');
+                text.textContent = lang.toUpperCase();
+
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
                         selectedLanguages.add(lang);
-                        btn.classList.add('active');
+                        chip.classList.add('active');
+                    } else {
+                        selectedLanguages.delete(lang);
+                        chip.classList.remove('active');
                     }
+                    updateLineInfo();
                 });
-                grid.appendChild(btn);
+
+                chip.appendChild(checkbox);
+                chip.appendChild(text);
+                grid.appendChild(chip);
             });
 
             document.getElementById('check-random-lang').addEventListener('change', e => {
-            randomLanguageMode = e.target.checked;
-        });
+                randomLanguageMode = e.target.checked;
+            });
 
-        document.getElementById('lang-all-btn').addEventListener('click', () => {
+            document.getElementById('lang-all-btn').addEventListener('click', () => {
                 LANG_KEYS.forEach(l => selectedLanguages.add(l));
-                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.add('active'));
+                grid.querySelectorAll('.lang-chip').forEach(chip => {
+                    chip.classList.add('active');
+                    chip.querySelector('input').checked = true;
+                });
+                updateLineInfo();
             });
             document.getElementById('lang-none-btn').addEventListener('click', () => {
                 selectedLanguages.clear();
-                grid.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                grid.querySelectorAll('.lang-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                    chip.querySelector('input').checked = false;
+                });
+                updateLineInfo();
             });
         })();
+
+        // --- Cursor Style Setup ---
+        document.querySelectorAll('.cursor-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                cursorMode = btn.dataset.cursor;
+                document.querySelectorAll('.cursor-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
         // --- 5. Event Listeners ---
         document.querySelectorAll('.diff-btn').forEach(btn => {
@@ -727,10 +1116,7 @@
             document.getElementById('start-line').value = rand;
         });
 
-        // Update line count whenever language or difficulty changes
-        document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', updateLineInfo));
-        document.getElementById('lang-all-btn').addEventListener('click', updateLineInfo);
-        document.getElementById('lang-none-btn').addEventListener('click', updateLineInfo);
+        // Update line count whenever difficulty changes (language changes call updateLineInfo directly)
         document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', updateLineInfo));
         updateLineInfo(); // init on load
 
@@ -884,6 +1270,12 @@
             els.ui.classList.remove('hidden');
         }
 
+        function cursorClass() {
+            return cursorMode === 'block' ? 'cursor-block'
+                 : cursorMode === 'line-static' ? 'cursor-line-static'
+                 : 'cursor-line-blink';
+        }
+
         function renderLine() {
             const target = gameLines[currentLineIndex];
             let html = '';
@@ -916,12 +1308,12 @@
                 if (i < currentInput.length) {
                     html += `<span class="char ${isCorrect ? 'correct' : 'wrong'}">${escapeHtml(tChar)}</span>`;
                 } else if (i === currentInput.length) {
-                    html += `<span class="char pending">${escapeHtml(tChar)}</span><span class="cursor"></span>`;
+                    html += `<span class="cursor ${cursorClass()}"></span><span class="char pending">${escapeHtml(tChar)}</span>`;
                 } else {
                     html += `<span class="char pending">${escapeHtml(tChar)}</span>`;
                 }
             }
-            if (currentInput.length === target.length) html += `<span class="cursor"></span>`;
+            if (currentInput.length === target.length) html += `<span class="cursor ${cursorClass()}"></span>`;
             els.curr.innerHTML = html;
 
             const diff = DIFFICULTIES[selectedDifficultyIdx];
