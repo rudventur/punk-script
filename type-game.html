@@ -363,6 +363,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/RudVentur.com/embed/apple-touch-icon.png">
 <script src="https://rudventur.github.io/RudVentur.com/embed/rvView.js"></script>
+<script src="https://rudventur.github.io/RudVentur.com/embed/popcoin-reward.js" defer></script>
 </head>
 <body>
 
@@ -963,6 +964,7 @@
         function endGame() {
             isGameActive = false;
             els.uiTitle.textContent = "SESSION COMPLETE";
+            rewardRound();
             
             if (skippedLines.length > 0) {
                 els.skippedList.classList.remove('hidden');
@@ -972,6 +974,18 @@
                 els.skippedList.classList.add('hidden');
             }
             els.ui.classList.remove('hidden');
+        }
+
+        // 🍿 PopCOIN: 1 pip per word typed (5 characters) × accuracy × difficulty.
+        // The wallet pays it out within the rules' limits (3 per 30 s, 50 a day).
+        const POPCOIN_DIFF_MULT = [0.5, 0.75, 1, 1.5, 2];
+        function rewardRound() {
+            const chars = stats.totalChars;
+            if (chars < 25 || typeof window.PopCOINReward !== 'function') return;
+            const accuracy = chars / (chars + totalMistakes);
+            const mult = POPCOIN_DIFF_MULT[selectedDifficultyIdx] || 1;
+            const pips = Math.floor((chars / 5) * accuracy * mult);
+            if (pips > 0) window.PopCOINReward(pips, 'type-game');
         }
 
         function renderLine() {
