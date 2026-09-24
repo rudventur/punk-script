@@ -473,7 +473,8 @@
                 <div class="card-title">Import Remote (GitHub)</div>
                 <input type="text" id="github-url" placeholder="Paste GitHub URL (e.g. github.com/user/repo/...)">
                 <button class="btn btn-secondary" id="fetch-btn">Fetch from GitHub</button>
-                <span id="fetch-status" style="font-size:0.8rem; margin-top:5px; display:block; height:1rem;"></span>
+                <button class="btn btn-secondary" id="random-repo-btn" style="margin-top:8px;">🎲 Random Public Repo</button>
+                <span id="fetch-status" style="font-size:0.8rem; margin-top:5px; display:block; min-height:1rem; overflow-wrap:anywhere;"></span>
             </div>
         </div>
 
@@ -798,14 +799,8 @@
             // Convert to Raw URL
             let rawUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
             
-            // Use CORS Proxy (AllOrigins)
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`;
-
             try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Network error");
-                
-                const text = await response.text();
+                const text = await fetchRaw(rawUrl);
                 gameLines = text.split(/\r?\n/).filter(line => line.length > 0);
                 externalContentLoaded = true;
                 
@@ -817,6 +812,87 @@
                 els.fetchStatus.style.color = "var(--neon-pink)";
                 console.error(err);
             }
+        });
+
+        // raw.githubusercontent.com allows direct requests; the AllOrigins proxy is
+        // only a fallback now (it's often slow or down)
+        async function fetchRaw(rawUrl) {
+            try {
+                const r = await fetch(rawUrl);
+                if (r.ok) return await r.text();
+            } catch (e) {}
+            const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`);
+            if (!r.ok) throw new Error("Network error");
+            return await r.text();
+        }
+
+        // --- 🎲 Random public repo: pick a popular repo in one of the selected
+        //     languages, then a random code file of a sensible size, to re-type ---
+        const GH_LANG = {
+            python:     { q: 'language:Python',     ext: ['.py'] },
+            javascript: { q: 'language:JavaScript', ext: ['.js', '.mjs'] },
+            css:        { q: 'language:CSS',        ext: ['.css'] },
+            html:       { q: 'language:HTML',       ext: ['.html', '.htm'] },
+            sql:        { q: 'language:PLpgSQL',    ext: ['.sql'] },
+            java:       { q: 'language:Java',       ext: ['.java'] },
+            cpp:        { q: 'language:C++',        ext: ['.cpp', '.cc', '.hpp', '.h'] },
+            bash:       { q: 'language:Shell',      ext: ['.sh', '.bash'] }
+        };
+        const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+        async function ghJson(url) {
+            const r = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+            if (r.status === 403 || r.status === 429) throw new Error('GitHub rate limit hit, try again in a minute');
+            if (!r.ok) throw new Error('GitHub said ' + r.status);
+            return r.json();
+        }
+        async function loadRandomRepo() {
+            const pool = [...selectedLanguages].filter(l => GH_LANG[l]);
+            const lang = pick(pool.length ? pool : Object.keys(GH_LANG));
+            const spec = GH_LANG[lang];
+            const status = els.fetchStatus;
+            status.style.color = "var(--text-dim)";
+            status.textContent = `🎲 Rolling a random ${lang} repo...`;
+            for (let attempt = 0; attempt < 4; attempt++) {
+                // popular-ish repos, a random page of results so it's different each time
+                const page = 1 + Math.floor(Math.random() * 10);
+                const search = await ghJson(`https://api.github.com/search/repositories?q=${encodeURIComponent(spec.q + ' stars:>200 size:<50000')}&sort=stars&per_page=30&page=${page}`);
+                if (!search.items || !search.items.length) continue;
+                const repo = pick(search.items);
+                status.textContent = `🎲 ${repo.full_name} — looking for a ${lang} file...`;
+                let tree;
+                try {
+                    tree = await ghJson(`https://api.github.com/repos/${repo.full_name}/git/trees/${encodeURIComponent(repo.default_branch)}?recursive=1`);
+                } catch (e) { if (/rate limit/.test(e.message)) throw e; continue; }
+                const files = (tree.tree || []).filter(f => f.type === 'blob' && f.size > 600 && f.size < 15000 &&
+                    spec.ext.some(x => f.path.toLowerCase().endsWith(x)) &&
+                    !/(^|\/)(node_modules|vendor|dist|build|third_party|test|tests|__tests__)\//i.test(f.path) &&
+                    !/\.min\./i.test(f.path));
+                if (!files.length) continue;
+                const file = pick(files);
+                const raw = `https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch}/${file.path.split('/').map(encodeURIComponent).join('/')}`;
+                const text = await fetchRaw(raw);
+                const lines = text.split(/\r?\n/).map(l => l.replace(/\s+$/, '')).filter(l => l.length > 0 && l.length <= 160 &&
+                        /^[\x20-\x7E\t]+$/.test(l) && /[A-Za-z0-9]/.test(l)); // only keyboard-typeable lines
+                if (lines.length < 8) continue;
+                gameLines = lines;
+                externalContentLoaded = true;
+                els.gitUrl.value = `https://github.com/${repo.full_name}/blob/${repo.default_branch}/${file.path}`;
+                status.style.color = "var(--neon-green)";
+                status.textContent = `Loaded ${lines.length} lines of ${lang} from ${repo.full_name} / ${file.path}`;
+                return;
+            }
+            throw new Error('no suitable file found, roll again');
+        }
+        document.getElementById('random-repo-btn').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            try { await loadRandomRepo(); }
+            catch (err) {
+                els.fetchStatus.style.color = "var(--neon-pink)";
+                els.fetchStatus.textContent = "🎲 " + err.message;
+                console.error(err);
+            }
+            btn.disabled = false;
         });
 
         // --- 5. Core Game Logic ---
