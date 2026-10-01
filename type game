@@ -916,7 +916,7 @@
                 if (i < currentInput.length) {
                     html += `<span class="char ${isCorrect ? 'correct' : 'wrong'}">${escapeHtml(tChar)}</span>`;
                 } else if (i === currentInput.length) {
-                    html += `<span class="char pending">${escapeHtml(tChar)}</span><span class="cursor"></span>`;
+                    html += `<span class="cursor"></span><span class="char pending">${escapeHtml(tChar)}</span>`;
                 } else {
                     html += `<span class="char pending">${escapeHtml(tChar)}</span>`;
                 }
