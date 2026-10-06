@@ -188,6 +188,25 @@ header{
 .checkbox-row input{accent-color:var(--accent)}
 
 /* ── CANVAS ── */
+/* ── PANEL TOGGLES (panel-toggle.js) ── */
+:root{
+  --sf-panel-accent:var(--accent);--sf-panel-text:var(--muted);--sf-panel-ink:var(--bg);
+  --sf-panel-font:'DM Mono',monospace;--sf-panel-font-size:10px;--sf-panel-radius:4px;
+  --sf-panel-title-font:'Syne',sans-serif;--sf-panel-title-size:10px;--sf-panel-title-spacing:2px;
+}
+.sf-ptitle{font-weight:700;text-transform:uppercase}
+.col-head{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:1}
+header .sf-ptoggle{margin-left:0}
+body.sf-hidden-header header{display:none}
+.sf-ptab.top-tab{display:none;padding:3px 12px;border-radius:0 0 6px 6px;position:fixed;top:0;right:16px;z-index:20;font-weight:500}
+body.sf-hidden-header .sf-ptab.top-tab{display:flex}
+body.sf-hidden-left .left-panel,body.sf-hidden-right .right-panel{display:none}
+.sf-ptab.side-tab{display:none;flex-direction:column;justify-content:flex-start;align-self:flex-start;gap:6px;width:22px;flex-shrink:0;padding:10px 0;z-index:2;margin-top:12px}
+.sf-ptab.side-tab-left{border-radius:0 6px 6px 0}.sf-ptab.side-tab-right{border-radius:6px 0 0 6px}
+.sf-ptab.side-tab .side-tab-txt{writing-mode:vertical-rl;letter-spacing:2px;font-size:10px}
+body.sf-hidden-left .sf-ptab.side-tab-left,body.sf-hidden-right .sf-ptab.side-tab-right{display:flex}
+@media (max-width:700px){header{flex-wrap:wrap;gap:8px 12px}header > div[style*="margin-left:24px"]{margin-left:0 !important}}
+
 .canvas-wrap{
   flex:1;
   position:relative;
@@ -415,12 +434,16 @@ header{
     </div>
     <button class="gyro-badge" id="gyroBtn" onclick="toggleGyro()">GYRO OFF</button>
   </div>
+  <button class="sf-ptoggle" type="button" data-panel-toggle="header"><span class="sf-pt-icon"></span><span class="sf-pt-label"></span></button>
 </header>
+<button class="sf-ptab top-tab" type="button" data-panel-toggle="header"><span class="sf-pt-icon"></span> 📶 WiFi Mapper</button>
 
 <div class="layout">
 
   <!-- LEFT -->
-  <div class="left-panel">
+  <button class="sf-ptab side-tab side-tab-left" type="button" data-panel-toggle="left"><span class="sf-pt-icon"></span><span class="side-tab-txt">ROOM</span></button>
+  <div class="left-panel" id="leftPanel">
+    <div class="sf-phead col-head"><span class="sf-ptitle">Room</span><button class="sf-ptoggle" type="button" data-panel-toggle="left"><span class="sf-pt-icon"></span><span class="sf-pt-label"></span></button></div>
 
     <div class="panel-section">
       <div class="panel-title">Tools</div>
@@ -516,7 +539,8 @@ header{
   </div>
 
   <!-- RIGHT -->
-  <div class="right-panel">
+  <div class="right-panel" id="rightPanel">
+    <div class="sf-phead col-head"><span class="sf-ptitle">Signal</span><button class="sf-ptoggle" type="button" data-panel-toggle="right"><span class="sf-pt-icon"></span><span class="sf-pt-label"></span></button></div>
     <div class="panel-section">
       <div class="panel-title">Signal Pins <span id="pinCount" style="color:var(--accent)">0</span></div>
       <button class="tool-btn" onclick="showScrub()" style="margin-bottom:4px"><span class="icon">▶️</span>Play Walk</button>
@@ -550,6 +574,7 @@ header{
       </div>
     </div>
   </div>
+  <button class="sf-ptab side-tab side-tab-right" type="button" data-panel-toggle="right"><span class="sf-pt-icon"></span><span class="side-tab-txt">SIGNAL</span></button>
 </div>
 
 <!-- PIN MODAL -->
@@ -583,6 +608,7 @@ header{
   </div>
 </div>
 
+<script src="js/panel-toggle.js"></script>
 <script>
 // ═══════════════════════════════════════
 // WiFi Room Mapper v0.1
@@ -1472,6 +1498,25 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 
 // ── Init ───────────────────────────────
 resize();
+
+// ── Panel toggles: top bar, left (room) and right (signal) columns ──
+(function () {
+  const body = document.body;
+  const narrow = () => window.innerWidth < 760;
+  function bodyPanel(id, label, side, open) {
+    sfPanels.register({
+      id, label, side,
+      read: () => !body.classList.contains('sf-hidden-' + id),
+      apply: o => { body.classList.toggle('sf-hidden-' + id, !o); resize(); }
+    });
+    sfPanels.set(id, sfPanels.saved(id, open), { noSave: true });
+  }
+  bodyPanel('header', 'the top bar', 'top', true);
+  // On a phone both 220px columns left no room for the map, so they start
+  // hidden there (until opened once; then the choice is remembered).
+  bodyPanel('left', 'the room tools', 'left', !narrow());
+  bodyPanel('right', 'the signal pins', 'right', !narrow());
+})();
 startLiveReading();
 setTool('select');
 

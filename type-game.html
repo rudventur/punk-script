@@ -355,6 +355,20 @@
             .code-line { padding-right: 60px; font-size: 1.1rem; }
             #stats-panel { grid-template-columns: 1fr 1fr; }
         }
+
+        /* --- Panel toggles (panel-toggle.js) --- */
+        :root {
+            --sf-panel-accent: var(--neon-blue); --sf-panel-text: var(--neon-blue); --sf-panel-ink: var(--bg-color);
+            --sf-panel-font: var(--font-stack); --sf-panel-font-size: 0.75rem; --sf-panel-radius: 6px;
+        }
+        header .sf-ptoggle { margin-left: 16px; }
+        #stats-panel { position: relative; }
+        .stats-toggle { position: absolute; top: -26px; right: 0; }
+        body.sf-hidden-hud header, body.sf-hidden-stats #stats-panel { display: none; }
+        .sf-ptab.tg-tab { display: none; position: fixed; right: 20px; z-index: 60; padding: 2px 12px; }
+        .sf-ptab.tg-tab-top { top: 0; border-radius: 0 0 6px 6px; }
+        .sf-ptab.tg-tab-bottom { bottom: 0; border-radius: 6px 6px 0 0; }
+        body.sf-hidden-hud .sf-ptab.tg-tab-top, body.sf-hidden-stats .sf-ptab.tg-tab-bottom { display: flex; }
     </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
@@ -384,7 +398,9 @@
                 <span class="hud-lbl">Recovery</span>
             </div>
         </div>
+        <button class="sf-ptoggle" type="button" data-panel-toggle="hud"><span class="sf-pt-icon"></span><span class="sf-pt-label"></span></button>
     </header>
+    <button class="sf-ptab tg-tab tg-tab-top" type="button" data-panel-toggle="hud"><span class="sf-pt-icon"></span> HUD</button>
 
     <!-- Game Area -->
     <div id="game-container">
@@ -397,7 +413,9 @@
     </div>
 
     <!-- Stats Footer -->
+    <button class="sf-ptab tg-tab tg-tab-bottom" type="button" data-panel-toggle="stats"><span class="sf-pt-icon"></span> stats</button>
     <div id="stats-panel">
+        <div class="stats-toggle"><button class="sf-ptoggle" type="button" data-panel-toggle="stats"><span class="sf-pt-icon"></span><span class="sf-pt-label"></span></button></div>
         <div class="stat-box blue"><span class="stat-val" id="count-letters">0</span><span class="stat-lbl">Letters</span></div>
         <div class="stat-box green"><span class="stat-val" id="count-numbers">0</span><span class="stat-lbl">Numbers</span></div>
         <div class="stat-box pink"><span class="stat-val" id="count-symbols">0</span><span class="stat-lbl">Symbols</span></div>
@@ -1087,6 +1105,26 @@
         function escapeHtml(text) {
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+    </script>
+    <script src="js/panel-toggle.js"></script>
+    <script>
+        // HUD (top bar) and stats (bottom counters): hide / show, remembered.
+        ['hud', 'stats'].forEach(function (id) {
+            sfPanels.register({
+                id: id, el: id === 'hud' ? 'header' : '#stats-panel', side: id === 'hud' ? 'top' : 'bottom',
+                label: id === 'hud' ? 'the WPM bar' : 'the character counters',
+                read: function () { return !document.body.classList.contains('sf-hidden-' + id); },
+                apply: function (open) { document.body.classList.toggle('sf-hidden-' + id, !open); }
+            });
+            sfPanels.set(id, sfPanels.saved(id, true), { noSave: true });
+        });
+        // Typing goes to a hidden input: give it back after a toggle click so
+        // a round in progress keeps going.
+        document.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('[data-panel-toggle]') && isGameActive) {
+                setTimeout(function () { els.input.focus(); }, 0);
+            }
+        });
     </script>
 </body>
 </html>
