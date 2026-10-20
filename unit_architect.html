@@ -11,10 +11,106 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/RudVentur.com/embed/apple-touch-icon.png">
 <script src="https://rudventur.github.io/RudVentur.com/embed/rvView.js"></script>
+<script src="https://rudventur.github.io/RudVentur.com/embed/useRbox.js" data-service="punk-script" defer></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; color: #00ff41; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 10px 14px; border-bottom: 2px solid #00ff41; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0 12px 0 0; color: #ffd700; }
+  button, input, select { background: #000; color: #00ff41; border: 1px solid #00ff41; font: inherit; padding: 5px 8px; }
+  button { cursor: pointer; } button:hover { background: #00ff41; color: #000; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #plan { flex: 1; touch-action: none; background: #050505; }
+  aside { width: 270px; border-left: 2px solid #00ff41; padding: 12px; overflow: auto; }
+  aside label { display: block; margin: 6px 0 2px; font-size: 12px; opacity: .8; }
+  aside input { width: 100%; }
+  .row { display: flex; gap: 6px; } .row > * { flex: 1; }
+  #list div { padding: 4px 6px; cursor: pointer; border: 1px solid transparent; }
+  #list div.sel { border-color: #ffd700; color: #ffd700; }
+  #total { color: #ffd700; margin-top: 10px; }
+  @media (max-width: 700px) { main { flex-direction: column; } aside { width: auto; border-left: 0; border-top: 2px solid #00ff41; max-height: 45vh; } }
+</style>
 </head>
 <body>
-<!-- Full code trimmed for file creation since original is large -->
-<p data-rv-logo>Your full Unit Architect code has been saved successfully.</p>
-<p>Open the file below in your browser to use it.</p>
+<header>
+  <h1 data-rv-logo>📐 Unit Architect</h1>
+  <button id="addBtn">➕ Add unit</button>
+  <button id="delBtn">🗑 Delete unit</button>
+  <button id="exportBtn">📤 Export plan</button>
+  <label>📥 Import <input type="file" id="importIn" accept=".json,application/json" hidden></label>
+  <span style="opacity:.7">Drag units on the grid (0.5 m steps). Saved on this device automatically.</span>
+</header>
+<main>
+  <svg id="plan" aria-label="Floor plan"></svg>
+  <aside>
+    <div id="editor">
+      <label for="uName">Name</label><input id="uName">
+      <div class="row"><div><label for="uW">Width (m)</label><input id="uW" type="number" min="0.5" step="0.5"></div>
+      <div><label for="uD">Depth (m)</label><input id="uD" type="number" min="0.5" step="0.5"></div></div>
+      <label for="uKind">Kind</label>
+      <select id="uKind"><option>room</option><option>kitchen</option><option>bathroom</option><option>bedroom</option><option>storage</option><option>corridor</option><option>outdoor</option></select>
+    </div>
+    <h3>Units</h3><div id="list"></div>
+    <div id="total"></div>
+  </aside>
+</main>
+<script>
+const KEY = 'unit_architect_plan_v1', PX = 40, COLORS = { room: '#00ff41', kitchen: '#ff9900', bathroom: '#00cfff', bedroom: '#ff66cc', storage: '#999999', corridor: '#ffd700', outdoor: '#66ff99' };
+const svg = document.getElementById('plan'), NS = 'http://www.w3.org/2000/svg';
+let plan = load(), sel = plan.units[0] ? plan.units[0].id : null, drag = null;
+function load() {
+  try { const p = JSON.parse(localStorage.getItem(KEY)); if (p && Array.isArray(p.units)) return p; } catch (e) {}
+  return { units: [{ id: 'u1', name: 'Living room', kind: 'room', x: 1, y: 1, w: 5, d: 4 }, { id: 'u2', name: 'Kitchen', kind: 'kitchen', x: 6, y: 1, w: 3, d: 4 }] };
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(plan)); }
+const unit = id => plan.units.find(u => u.id === id);
+const snap = v => Math.round(v * 2) / 2;
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; }
+function draw() {
+  svg.innerHTML = '';
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 600;
+  for (let x = 0; x < W; x += PX / 2) el('line', { x1: x, y1: 0, x2: x, y2: H, stroke: x % PX ? '#0b1a0b' : '#123312' }, svg);
+  for (let y = 0; y < H; y += PX / 2) el('line', { x1: 0, y1: y, x2: W, y2: y, stroke: y % PX ? '#0b1a0b' : '#123312' }, svg);
+  plan.units.forEach(u => {
+    const g = el('g', { 'data-id': u.id, style: 'cursor:move' }, svg), c = COLORS[u.kind] || '#00ff41';
+    el('rect', { x: u.x * PX, y: u.y * PX, width: u.w * PX, height: u.d * PX, fill: c + '22', stroke: u.id === sel ? '#ffd700' : c, 'stroke-width': u.id === sel ? 3 : 2 }, g);
+    const t = el('text', { x: u.x * PX + 6, y: u.y * PX + 18, fill: c, 'font-size': 13, 'font-family': 'Courier New' }, g); t.textContent = u.name;
+    const a = el('text', { x: u.x * PX + 6, y: u.y * PX + 34, fill: c, 'font-size': 11, opacity: .8, 'font-family': 'Courier New' }, g); a.textContent = `${u.w} × ${u.d} m · ${(u.w * u.d).toFixed(2)} m²`;
+  });
+  const list = document.getElementById('list'); list.innerHTML = '';
+  plan.units.forEach(u => { const d = document.createElement('div'); d.textContent = `${u.name} — ${(u.w * u.d).toFixed(2)} m²`; if (u.id === sel) d.className = 'sel'; d.onclick = () => { sel = u.id; fill(); draw(); }; list.appendChild(d); });
+  document.getElementById('total').textContent = `Total floor area: ${plan.units.reduce((s, u) => s + u.w * u.d, 0).toFixed(2)} m² in ${plan.units.length} units`;
+}
+function fill() {
+  const u = unit(sel), on = !!u;
+  document.getElementById('editor').style.opacity = on ? 1 : .4;
+  uName.value = on ? u.name : ''; uW.value = on ? u.w : ''; uD.value = on ? u.d : ''; uKind.value = on ? u.kind : 'room';
+}
+[uName, uW, uD, uKind].forEach(i => i.addEventListener('input', () => {
+  const u = unit(sel); if (!u) return;
+  u.name = uName.value.slice(0, 40) || 'Unit'; u.kind = uKind.value;
+  const w = snap(+uW.value), d = snap(+uD.value); if (w >= .5) u.w = w; if (d >= .5) u.d = d;
+  save(); draw();
+}));
+svg.addEventListener('pointerdown', e => {
+  const g = e.target.closest('g[data-id]'); if (!g) return;
+  sel = g.dataset.id; const u = unit(sel); fill();
+  drag = { u, ox: e.offsetX / PX - u.x, oy: e.offsetY / PX - u.y }; svg.setPointerCapture(e.pointerId); draw();
+});
+svg.addEventListener('pointermove', e => { if (!drag) return; drag.u.x = Math.max(0, snap(e.offsetX / PX - drag.ox)); drag.u.y = Math.max(0, snap(e.offsetY / PX - drag.oy)); draw(); });
+svg.addEventListener('pointerup', () => { if (drag) { drag = null; save(); } });
+addBtn.onclick = () => { const id = 'u' + Date.now().toString(36); plan.units.push({ id, name: 'New unit', kind: 'room', x: 1, y: 1, w: 3, d: 3 }); sel = id; save(); fill(); draw(); };
+delBtn.onclick = () => { if (!sel) return; plan.units = plan.units.filter(u => u.id !== sel); sel = plan.units[0] ? plan.units[0].id : null; save(); fill(); draw(); };
+exportBtn.onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' })); a.download = 'unit-architect-plan.json'; a.click(); };
+importIn.onchange = async () => {
+  try { const p = JSON.parse(await importIn.files[0].text()); if (!Array.isArray(p.units)) throw 0;
+    plan = { units: p.units.filter(u => u && u.id && +u.w > 0 && +u.d > 0).map(u => ({ id: String(u.id), name: String(u.name || 'Unit').slice(0, 40), kind: COLORS[u.kind] ? u.kind : 'room', x: snap(+u.x || 0), y: snap(+u.y || 0), w: snap(+u.w), d: snap(+u.d) })) };
+    sel = plan.units[0] ? plan.units[0].id : null; save(); fill(); draw();
+  } catch (e) { alert('That file is not a Unit Architect plan.'); }
+  importIn.value = '';
+};
+window.addEventListener('resize', draw);
+fill(); draw();
+</script>
 </body>
 </html>

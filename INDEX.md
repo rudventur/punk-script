@@ -13,7 +13,7 @@
 | `wifi-room-mapper.html` | HTML / JS / Canvas | WiFi signal mapper v1 — 2D/3D canvas, heatmaps, select & move |
 | `wifi-mapper-v2.html` | HTML / JS / Three.js | WiFi Room Mapper v2.0 — full 3D with drag, multi-room, signal heatmap, save/load |
 | `wifi-mapper-v2-cam.html` | HTML / JS / Three.js | WiFi Room Mapper v2.1 — v2.0 + live phone camera background, frame capture |
-| `unit_architect.html` | HTML | Unit Architect v1.0 — placeholder/stub |
+| `unit_architect.html` | HTML / JS | Unit Architect v1.0 — floor plan of units on a 0.5 metre grid: add, drag, size, area totals, saved on the device, export and import |
 | `index.html` | HTML / JS | RudVentur Social landing page — "what is your poison?" |
 | `profile.html` | HTML / JS | Universal profile page (create + view, all entity types) |
 | `browse.html` | HTML / JS | Public directory — latest 50 profiles, filterable by type |
@@ -213,9 +213,9 @@ Everything from v2.0 plus live phone camera as the 3D scene background — AR-li
 
 ---
 
-## unit_architect.html — Stub
+## unit_architect.html — Unit Architect
 
-Placeholder file. Contains minimal HTML boilerplate with a message that the full Unit Architect code should be opened separately.
+Plans architectural units (rooms) on a 0.5 metre grid. Add a unit, drag it into place, set its name, width, depth and kind; the list shows each area and the total floor area. The plan is kept in localStorage (`unit_architect_plan_v1`) and can be exported and imported as JSON.
 
 ---
 
