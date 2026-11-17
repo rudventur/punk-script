@@ -412,6 +412,62 @@
         html.tg-kb .sf-ptab.tg-tab-bottom { bottom: auto; top: calc(var(--tg-app-top, 0px) + var(--tg-app-h, 100vh)); transform: translateY(-100%); }
         html.tg-tiny .line-prev, html.tg-tiny .line-next { -webkit-line-clamp: 1; line-clamp: 1; }
         html.tg-tiny .stat-lbl, html.tg-tiny .hud-lbl { display: none; }
+        /* --- Alternative keyboard: shows which keys the computer THINKS are pressed --- */
+        :root { --alt-green: #39ff14; }
+        #altkb-wrap { position: relative; width: 90%; max-width: 900px; flex-shrink: 0; margin-bottom: 8px; font-family: var(--font-stack); }
+        #altkb-wrap.alt-off #altkb { display: none; }
+        #altkb { background: #000; border: 1px solid rgba(57,255,20,0.35); border-radius: 8px; padding: 4px; box-shadow: 0 0 12px rgba(57,255,20,0.12); user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+        .altkb-row { display: flex; gap: 3px; margin-bottom: 3px; }
+        .altkb-row:last-child { margin-bottom: 0; }
+        .altkb-key {
+            flex: 1 1 0; min-width: 0; height: 24px; display: flex; align-items: center; justify-content: center;
+            background: #020402; color: rgba(57,255,20,0.55); border: 1px solid rgba(57,255,20,0.25); border-radius: 4px;
+            font-family: var(--font-stack); font-size: 0.68rem; line-height: 1; padding: 0 2px; cursor: pointer;
+            overflow: hidden; white-space: nowrap; transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+        }
+        .altkb-key.used { color: var(--alt-green); border-color: rgba(57,255,20,0.6); background: rgba(57,255,20,0.10); }
+        .altkb-key.down {
+            background: var(--alt-green); color: #000; border-color: #b6ff9e; font-weight: 800; transition: none;
+            box-shadow: 0 0 6px var(--alt-green), 0 0 16px var(--alt-green), 0 0 32px rgba(57,255,20,0.7);
+        }
+        .altkb-key.soft { box-shadow: 0 0 8px var(--alt-green); color: var(--alt-green); }
+        .altkb-key.opt { color: #000; background: rgba(57,255,20,0.75); font-weight: 800; }
+        .altkb-key.latched { outline: 1px solid var(--alt-green); color: var(--alt-green); }
+        #altkb-last { flex: 2.2 1 0; cursor: default; font-size: 0.6rem; color: rgba(57,255,20,0.7); }
+        #altkb-mini {
+            display: none; margin-left: auto; background: #000; color: var(--alt-green); border: 1px solid var(--alt-green);
+            border-radius: 6px; font-family: var(--font-stack); font-size: 0.7rem; padding: 4px 10px; min-height: 32px; cursor: pointer;
+            box-shadow: 0 0 8px rgba(57,255,20,0.4);
+        }
+        #altkb-wrap.alt-off #altkb-mini { display: block; }
+        #altkb-warn {
+            display: none; margin-bottom: 4px; padding: 3px 8px; border: 1px solid #ffb000; border-radius: 6px;
+            color: #ffb000; background: rgba(255,176,0,0.08); font-size: 0.72rem; text-shadow: 0 0 6px rgba(255,176,0,0.6);
+        }
+        #altkb-warn.show { display: flex; gap: 8px; align-items: center; }
+        #altkb-warn span { flex: 1; }
+        #altkb-warn button { background: transparent; border: 1px solid #ffb000; color: #ffb000; border-radius: 4px; font-family: var(--font-stack); cursor: pointer; padding: 0 6px; }
+        #altkb-menu {
+            position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 70; width: min(320px, 100%);
+            background: #000; border: 1px solid var(--alt-green); border-radius: 8px; padding: 10px;
+            box-shadow: 0 0 18px rgba(57,255,20,0.35); color: var(--alt-green); font-size: 0.78rem;
+        }
+        #altkb-menu[hidden] { display: none; }
+        #altkb-menu .altkb-mtitle { font-weight: 800; margin-bottom: 6px; text-shadow: 0 0 6px var(--alt-green); }
+        #altkb-menu button {
+            display: block; width: 100%; text-align: left; margin-top: 5px; min-height: 32px; padding: 5px 8px;
+            background: #020402; color: var(--alt-green); border: 1px solid rgba(57,255,20,0.4); border-radius: 6px;
+            font-family: var(--font-stack); font-size: 0.75rem; cursor: pointer;
+        }
+        #altkb-menu button.active { background: rgba(57,255,20,0.18); border-color: var(--alt-green); box-shadow: 0 0 8px rgba(57,255,20,0.5); }
+        #altkb-menu .altkb-note { margin-top: 8px; font-size: 0.65rem; color: rgba(57,255,20,0.65); }
+        /* only while a round runs: the start menu covers the screen anyway */
+        #ui-layer:not(.hidden) ~ #altkb-wrap { visibility: hidden; }
+        html.tg-short #altkb-wrap { width: 96%; margin-bottom: 3px; }
+        html.tg-short .altkb-key { height: 20px; font-size: 0.6rem; }
+        html.tg-short .altkb-row { gap: 2px; margin-bottom: 2px; }
+        html.tg-tiny .altkb-key { height: 16px; font-size: 0.5rem; }
+        @media (max-width: 480px) { .altkb-key { font-size: 0.58rem; padding: 0 1px; } .altkb-row { gap: 2px; } }
     </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
@@ -468,6 +524,22 @@
     </div>
 
     <input type="text" id="hidden-input" autocomplete="off">
+
+    <!-- Alternative keyboard: lights up the keys the computer thinks are pressed -->
+    <div id="altkb-wrap">
+        <div id="altkb-warn" role="status"><span></span><button type="button" id="altkb-warn-x" title="Hide warning">✖</button></div>
+        <div id="altkb" aria-label="Alternative keyboard"></div>
+        <button type="button" id="altkb-mini" title="Show the alternative keyboard options">⌨ ALT keyboard</button>
+        <div id="altkb-menu" hidden>
+            <div class="altkb-mtitle">⌨ Keyboard options</div>
+            <button type="button" data-altmode="1">1 · Touch keyboard + alternative keyboard above it</button>
+            <button type="button" data-altmode="2">2 · Touch keyboard only (alternative hidden)</button>
+            <button type="button" data-altmode="3">3 · Alternative keyboard only (external keyboard)</button>
+            <button type="button" id="altkb-reset">↺ Reset used keys</button>
+            <button type="button" id="altkb-close">✖ Close</button>
+            <div class="altkb-note">Lit keys = keys this device says were pressed. Bright = held down now, dim = used.</div>
+        </div>
+    </div>
 
     <!-- UI Overlay -->
     <div id="ui-layer">
@@ -1238,6 +1310,7 @@
         var ROOMS = [0.45, 0.55, 0.35, 0];
         var room = parseFloat(localStorage.getItem('tg_kb_room'));
         if (ROOMS.indexOf(room) < 0) room = ROOMS[0];
+        var noSoft = false; // true when the phone's own keyboard is switched off (alternative keyboard only)
         var vkRect = null, fullH = 0, fullW = '', focused = false, sawKeyboard = false, guessTimer = null, guessing = false;
 
         if (touch) root.classList.add('tg-touch');
@@ -1268,7 +1341,7 @@
                 h = Math.min(h, vkRect.top - top);
             }
             if (h < fullH * 0.85) sawKeyboard = sawKeyboard || focused;
-            guessing = touch && focused && !sawKeyboard && room > 0 && guessReady;
+            guessing = touch && focused && !sawKeyboard && room > 0 && guessReady && !noSoft;
             if (guessing) h = Math.min(h, Math.round(fullH * (1 - room)));
             h = Math.max(160, Math.round(h));
             var kbOpen = touch && (h < fullH * 0.85);
@@ -1326,6 +1399,171 @@
         });
         showRoom();
         update();
+        window.tgKbFit = { update: update, setNoSoftKeyboard: function (v) { noSoft = !!v; update(); } };
+    })();
+    </script>
+    <script>
+    // --- Alternative keyboard ---------------------------------------------
+    // Shows the keys the computer THINKS are being pressed, so a broken
+    // keyboard or a gadget that types by itself becomes visible. Tapping its
+    // keys also types into the game. The Esc spot is the OPTIONS button.
+    (function () {
+        var wrap = document.getElementById('altkb-wrap');
+        var kb = document.getElementById('altkb');
+        var menu = document.getElementById('altkb-menu');
+        var warnBox = document.getElementById('altkb-warn');
+        var input = document.getElementById('hidden-input');
+        var touch = document.documentElement.classList.contains('tg-touch');
+        var ROWS = [
+            [['OPT', 'Escape', 1.3, 'opt'], ['`', 'Backquote'], ['1', 'Digit1'], ['2', 'Digit2'], ['3', 'Digit3'], ['4', 'Digit4'], ['5', 'Digit5'], ['6', 'Digit6'], ['7', 'Digit7'], ['8', 'Digit8'], ['9', 'Digit9'], ['0', 'Digit0'], ['-', 'Minus'], ['=', 'Equal'], ['⌫', 'Backspace', 1.6]],
+            [['Tab', 'Tab', 1.4], ['Q', 'KeyQ'], ['W', 'KeyW'], ['E', 'KeyE'], ['R', 'KeyR'], ['T', 'KeyT'], ['Y', 'KeyY'], ['U', 'KeyU'], ['I', 'KeyI'], ['O', 'KeyO'], ['P', 'KeyP'], ['[', 'BracketLeft'], [']', 'BracketRight'], ['\\', 'Backslash', 1.2]],
+            [['Caps', 'CapsLock', 1.7], ['A', 'KeyA'], ['S', 'KeyS'], ['D', 'KeyD'], ['F', 'KeyF'], ['G', 'KeyG'], ['H', 'KeyH'], ['J', 'KeyJ'], ['K', 'KeyK'], ['L', 'KeyL'], [';', 'Semicolon'], ["'", 'Quote'], ['⏎', 'Enter', 1.8]],
+            [['⇧', 'ShiftLeft', 2.2], ['Z', 'KeyZ'], ['X', 'KeyX'], ['C', 'KeyC'], ['V', 'KeyV'], ['B', 'KeyB'], ['N', 'KeyN'], ['M', 'KeyM'], [',', 'Comma'], ['.', 'Period'], ['/', 'Slash'], ['⇧', 'ShiftRight', 2.2]],
+            [['Ctrl', 'ControlLeft', 1.3], ['Alt', 'AltLeft', 1.2], ['space', 'Space', 5], ['Alt', 'AltRight', 1.2], ['←', 'ArrowLeft'], ['↑', 'ArrowUp'], ['↓', 'ArrowDown'], ['→', 'ArrowRight'], ['', '_last']]
+        ];
+        var SHIFTED = { Backquote: '~', Digit1: '!', Digit2: '@', Digit3: '#', Digit4: '$', Digit5: '%', Digit6: '^', Digit7: '&', Digit8: '*', Digit9: '(', Digit0: ')', Minus: '_', Equal: '+', BracketLeft: '{', BracketRight: '}', Backslash: '|', Semicolon: ':', Quote: '"', Comma: '<', Period: '>', Slash: '?' };
+        var PLAIN = { Backquote: '`', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Space: ' ' };
+        var CHAR2CODE = {};
+        Object.keys(PLAIN).forEach(function (c) { CHAR2CODE[PLAIN[c]] = c; });
+        Object.keys(SHIFTED).forEach(function (c) { CHAR2CODE[SHIFTED[c]] = c; });
+        var keys = {}, counts = {};
+
+        ROWS.forEach(function (row) {
+            var r = document.createElement('div'); r.className = 'altkb-row';
+            row.forEach(function (k) {
+                var el = document.createElement(k[1] === '_last' ? 'div' : 'button');
+                if (k[1] === '_last') { el.id = 'altkb-last'; el.className = 'altkb-key'; el.textContent = '› —'; el.title = 'The last key this device reported (also keys not drawn here, like F5)'; }
+                else {
+                    el.type = 'button'; el.className = 'altkb-key' + (k[3] ? ' ' + k[3] : ''); el.textContent = k[0];
+                    el.dataset.code = k[1]; el.title = k[1] === 'Escape' ? 'Options (Esc)' : k[0];
+                    keys[k[1]] = el;
+                }
+                el.style.flexGrow = k[2] || 1;
+                r.appendChild(el);
+            });
+            kb.appendChild(r);
+        });
+
+        // ---- lighting ----
+        var lastEl = document.getElementById('altkb-last');
+        function light(code, how) {
+            counts[code] = (counts[code] || 0) + 1;
+            if (lastEl) lastEl.textContent = '› ' + (code || '?').replace(/^Key|^Digit/, '');
+            var el = keys[code];
+            if (!el) return;
+            el.classList.add('used');
+            el.title = el.title.split(' — ')[0] + ' — pressed ' + counts[code] + (counts[code] === 1 ? ' time' : ' times');
+            if (how === 'down') el.classList.add('down');
+            else { el.classList.add('down'); setTimeout(function () { el.classList.remove('down'); }, 160); }
+        }
+        function unlight(code) { var el = keys[code]; if (el) el.classList.remove('down'); }
+        function clearDown() { Object.keys(keys).forEach(unlight); }
+
+        // ---- watching for odd input ----
+        var lastKeyAt = 0, lastRealKeyAt = 0, fastRun = 0, altTyping = false, warnTimer = null;
+        function warn(msg) {
+            warnBox.querySelector('span').textContent = '⚠ ' + msg;
+            warnBox.classList.add('show');
+            clearTimeout(warnTimer); warnTimer = setTimeout(function () { warnBox.classList.remove('show'); }, 10000);
+        }
+        document.getElementById('altkb-warn-x').addEventListener('click', function () { warnBox.classList.remove('show'); });
+        warnBox.addEventListener('pointerdown', function (e) { e.preventDefault(); }); // keep typing focus
+
+        document.addEventListener('keydown', function (e) {
+            var now = performance.now();
+            var real = e.code && e.key !== 'Unidentified' && e.keyCode !== 229;
+            if (real) {
+                light(e.code, 'down');
+                lastRealKeyAt = now;
+                if (!e.repeat) {
+                    if (lastKeyAt && now - lastKeyAt < 15) fastRun++; else fastRun = 0;
+                    lastKeyAt = now;
+                    if (fastRun >= 5) { warn('Keys are arriving faster than a person can type (' + (fastRun + 1) + ' keys under 15 ms apart). Something may be typing for you.'); fastRun = 0; }
+                }
+            }
+            if (e.code === 'Escape' && !menu.hidden) menu.hidden = true;
+        }, true);
+        document.addEventListener('keyup', function (e) { if (e.code) unlight(e.code); }, true);
+        window.addEventListener('blur', clearDown);
+
+        if (input) input.addEventListener('beforeinput', function (e) {
+            if (altTyping) return;
+            var now = performance.now();
+            if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') { warn('Text was pasted in, not typed.'); return; }
+            if (!e.data) return;
+            var fromKey = now - lastRealKeyAt < 120;
+            if (!fromKey) {
+                // a touch keyboard sends text without real key codes: light the matching keys softly
+                for (var i = 0; i < e.data.length && i < 40; i++) {
+                    var ch = e.data[i], code = /[a-z]/i.test(ch) ? 'Key' + ch.toUpperCase() : /[0-9]/.test(ch) ? 'Digit' + ch : CHAR2CODE[ch];
+                    if (code) { light(code, 'tap'); if (keys[code]) keys[code].classList.add('soft'); }
+                }
+                // with no touch keyboard in use, text with no key press behind it is odd
+                if (!touch || mode === 3) warn('Text appeared without a matching key press ("' + e.data.slice(0, 20) + '"). Something other than the keyboard may be typing.');
+            }
+        });
+
+        // ---- tapping the alternative keyboard types into the game ----
+        var shiftOn = false, capsOn = false;
+        function typeText(fn) {
+            if (!input) return;
+            altTyping = true;
+            input.value = fn(input.value);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            altTyping = false;
+        }
+        kb.addEventListener('pointerdown', function (e) {
+            var el = e.target.closest('.altkb-key[data-code]'); if (!el) return;
+            e.preventDefault(); // keep the focus (and the touch keyboard) where it is
+            var code = el.dataset.code;
+            if (code === 'Escape') { openMenu(); return; }
+            light(code, 'tap');
+            var active = typeof isGameActive !== 'undefined' && isGameActive;
+            if (code === 'ShiftLeft' || code === 'ShiftRight') { shiftOn = !shiftOn; keys.ShiftLeft.classList.toggle('latched', shiftOn); keys.ShiftRight.classList.toggle('latched', shiftOn); return; }
+            if (code === 'CapsLock') { capsOn = !capsOn; el.classList.toggle('latched', capsOn); return; }
+            if (!active) return;
+            if (code === 'Tab') { if (typeof skipLine === 'function') skipLine(); return; }
+            if (code === 'Backspace') { typeText(function (v) { return v.slice(0, -1); }); return; }
+            var ch = null;
+            if (/^Key/.test(code)) { ch = code.slice(3).toLowerCase(); if (shiftOn !== capsOn) ch = ch.toUpperCase(); }
+            else if (/^Digit/.test(code)) ch = shiftOn ? SHIFTED[code] : code.slice(5);
+            else if (PLAIN[code] !== undefined) ch = shiftOn && SHIFTED[code] ? SHIFTED[code] : PLAIN[code];
+            if (ch === null) return;
+            typeText(function (v) { return v + ch; });
+            if (shiftOn) { shiftOn = false; keys.ShiftLeft.classList.remove('latched'); keys.ShiftRight.classList.remove('latched'); }
+        });
+        kb.addEventListener('click', function (e) { e.stopPropagation(); }); // don't trigger the "tap the game" focus
+
+        // ---- options: three modes, remembered ----
+        var mode = parseInt(localStorage.getItem('tg_altkb_mode'), 10);
+        if ([1, 2, 3].indexOf(mode) < 0) mode = touch ? 1 : 3;
+        function openMenu() { menu.hidden = false; }
+        function setMode(m, save) {
+            mode = m;
+            if (save) localStorage.setItem('tg_altkb_mode', String(m));
+            wrap.classList.toggle('alt-off', m === 2);
+            menu.querySelectorAll('[data-altmode]').forEach(function (b) { b.classList.toggle('active', +b.dataset.altmode === m); });
+            // mode 3 on a touchscreen: keep the phone's own keyboard away
+            if (input) {
+                var wasFocused = document.activeElement === input;
+                if (m === 3 && touch) input.setAttribute('inputmode', 'none'); else input.removeAttribute('inputmode');
+                if (wasFocused && touch) { input.blur(); setTimeout(function () { input.focus(); }, 30); }
+            }
+            if (window.tgKbFit) window.tgKbFit.setNoSoftKeyboard(m === 3);
+        }
+        menu.addEventListener('click', function (e) {
+            var b = e.target.closest('button'); if (!b) return;
+            e.stopPropagation();
+            if (b.dataset.altmode) { setMode(+b.dataset.altmode, true); menu.hidden = true; }
+            else if (b.id === 'altkb-reset') { counts = {}; Object.keys(keys).forEach(function (c) { keys[c].classList.remove('used', 'soft', 'down'); keys[c].title = keys[c].title.split(' — ')[0]; }); if (lastEl) lastEl.textContent = '› —'; }
+            else if (b.id === 'altkb-close') menu.hidden = true;
+            if (typeof isGameActive !== 'undefined' && isGameActive && input) setTimeout(function () { input.focus(); }, 0);
+        });
+        menu.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+        document.getElementById('altkb-mini').addEventListener('click', function (e) { e.stopPropagation(); openMenu(); });
+        document.addEventListener('pointerdown', function (e) { if (!menu.hidden && !wrap.contains(e.target)) menu.hidden = true; });
+        setMode(mode, false);
+        window.tgAltKb = { setMode: function (m) { setMode(m, true); }, get mode() { return mode; } };
     })();
     </script>
 </body>
